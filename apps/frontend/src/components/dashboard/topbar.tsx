@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   Bell,
   Check,
@@ -31,9 +31,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TIME_RANGE_LABELS, TIME_RANGE_SHORT } from "@/lib/types";
-import type { ServerInfo, ServerStatus, TimeRange } from "@/lib/types";
+import type { ServerInfo, ServerStatus, TimeRange, AlertEvent } from "@/lib/types";
 import type { ConnectionState } from "@/hooks/use-stats";
-import { useAlerts } from "@/hooks/use-alerts";
 import { api } from "@/lib/api";
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || '';
@@ -47,6 +46,9 @@ interface TopbarProps {
   connection: ConnectionState;
   onReconnect: () => void;
   alertCount: number;
+  alerts?: AlertEvent[];
+  onAcknowledgeAlert?: (id: string) => void;
+  onAcknowledgeAll?: () => void;
 }
 
 const STATUS_META: Record<
@@ -90,9 +92,10 @@ export function Topbar({
   connection,
   onReconnect,
   alertCount,
+  alerts = [],
+  onAcknowledgeAlert,
+  onAcknowledgeAll,
 }: TopbarProps) {
-  const { alerts, acknowledgeAll } = useAlerts(selectedServerId);
-
   const selectedServer =
     servers.find((s) => s.id === selectedServerId) ?? servers[0];
   const statusMeta = selectedServer
@@ -101,10 +104,8 @@ export function Topbar({
   const connMeta = CONNECTION_META[connection];
 
   const hasApi = !!API_BASE;
-  const recentAlerts = alerts
-    .filter((a) => !a.acknowledged)
-    .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, 5);
+  const unacked = alerts.filter((a) => !a.acknowledged);
+  const recent = [...unacked].sort((a, b) => b.timestamp - a.timestamp).slice(0, 5);
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border bg-card/80 px-3 backdrop-blur-md md:gap-3 md:px-6">
@@ -207,17 +208,21 @@ export function Topbar({
             <DropdownMenuLabel className="flex items-center justify-between">
               <span>Notifications</span>
               <Badge variant="secondary" className="text-[10px]">
-                {hasApi ? alerts.filter((a) => !a.acknowledged).length : alertCount} new
+                {unacked.length} new
               </Badge>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {recentAlerts.length === 0 ? (
+            {recent.length === 0 ? (
               <div className="px-3 py-6 text-center text-sm text-muted-foreground">
                 No unacknowledged alerts
               </div>
             ) : (
-              recentAlerts.map((alert) => (
-                <DropdownMenuItem key={alert.id} className="flex items-start gap-2 py-2">
+              recent.map((alert) => (
+                <DropdownMenuItem
+                  key={alert.id}
+                  className="flex items-start gap-2 py-2"
+                  onClick={() => onAcknowledgeAlert?.(alert.id)}
+                >
                   <span
                     className={cn(
                       "mt-1 h-2 w-2 shrink-0 rounded-full",
@@ -234,12 +239,12 @@ export function Topbar({
                 </DropdownMenuItem>
               ))
             )}
-            {hasApi && alerts.filter((a) => !a.acknowledged).length > 0 && (
+            {unacked.length > 0 && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="justify-center text-sm text-primary"
-                  onClick={() => acknowledgeAll()}
+                  onClick={() => onAcknowledgeAll?.()}
                 >
                   <Check className="mr-1.5 h-3.5 w-3.5" /> Mark all as read
                 </DropdownMenuItem>

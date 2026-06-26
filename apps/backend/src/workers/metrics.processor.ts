@@ -6,9 +6,7 @@ import { Repository } from 'typeorm';
 import { REDIS_PUBLISHER } from '../redis/redis.module';
 import { ServersService } from '../servers/servers.service';
 import { MetricSnapshotEntity } from '../database/entities/metric-snapshot.entity';
-import { AlertEntity } from '../database/entities/alert.entity';
 import { AlertsService } from '../alerts/alerts.service';
-import { NotificationsService } from '../notifications/notifications.service';
 import type Redis from 'ioredis';
 
 @Processor('metrics-ingest')
@@ -22,7 +20,6 @@ export class MetricsProcessor extends WorkerHost {
     @InjectRepository(MetricSnapshotEntity)
     private readonly metricRepo?: Repository<MetricSnapshotEntity>,
     private readonly alertsService?: AlertsService,
-    private readonly notificationsService?: NotificationsService,
   ) {
     super();
   }
@@ -66,38 +63,15 @@ export class MetricsProcessor extends WorkerHost {
       }
     }
 
-    // Persist alerts from the agent data to the alerts table and dispatch notifications
-    const incomingAlerts = data.alerts as Array<{ id?: string; title: string; message: string; severity: string; source?: string; timestamp?: number }> | undefined;
-    if (incomingAlerts && incomingAlerts.length > 0 && this.alertsService) {
+    // Evaluate metric thresholds and create alerts (backend-side, configurable via settings)
+    if (this.alertsService) {
       try {
-        for (const alertData of incomingAlerts) {
-          if (alertData.id) {
-            const existing = await this.alertsService.findBySourceId(alertData.id);
-            if (existing) continue;
-          }
-          const alert = await this.alertsService.create({
-            serverId,
-            title: alertData.title,
-            message: alertData.message,
-            severity: alertData.severity,
-            source: alertData.source || 'agent',
-            sourceId: alertData.id,
-            timestamp: new Date(alertData.timestamp || Date.now()),
-            acknowledged: false,
-          });
-
-          if (this.notificationsService) {
-            await this.notificationsService.dispatchFromAlert({
-              id: alert.id,
-              serverId,
-              title: alert.title,
-              message: alert.message,
-              severity: alert.severity,
-            });
-          }
-        }
+        const cpu = (data.cpu as number) || 0;
+        const memory = (data.memory as number) || 0;
+        const disk = (data.disk as number) || 0;
+        await this.alertsService.evaluateAndCreate(serverId, cpu, memory, disk);
       } catch (e) {
-        this.logger.warn(`Failed to persist alerts for ${serverId}: ${(e as Error).message}`);
+        this.logger.warn(`Alert evaluation failed for ${serverId}: ${(e as Error).message}`);
       }
     }
 

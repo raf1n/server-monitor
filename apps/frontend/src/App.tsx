@@ -66,10 +66,10 @@ function DashboardHome({
   );
 
   const threshold = Number(criticalThreshold) || 85;
-  const warnThreshold = Math.max(threshold - 15, 50);
-  const cpuStatus = stats ? statusFromValue(stats.cpu, [warnThreshold, threshold]) : 'good';
-  const memStatus = stats ? statusFromValue(stats.memory, [warnThreshold, threshold]) : 'good';
-  const diskStatus = stats ? statusFromValue(stats.disk, [warnThreshold + 5, threshold + 5]) : 'good';
+  const warningAt = Math.max(threshold - 5, 50);
+  const cpuStatus = stats ? statusFromValue(stats.cpu, [warningAt, threshold]) : 'good';
+  const memStatus = stats ? statusFromValue(stats.memory, [warningAt, threshold]) : 'good';
+  const diskStatus = stats ? statusFromValue(stats.disk, [warningAt + 5, threshold + 5]) : 'good';
   const procStatus: 'good' | 'warning' | 'critical' = stats && stats.activeProcesses === 0 ? 'warning' : 'good';
 
   return (
@@ -153,51 +153,74 @@ export default function App() {
   });
   const loading = connection === 'connecting';
 
-  const { alerts: apiAlerts, unacknowledgedCount: apiAlertCount } = useAlerts(
+  const { alerts: apiAlerts, unacknowledgedCount: apiAlertCount, acknowledgeAlert: apiAckAlert, acknowledgeAll: apiAckAll } = useAlerts(
     import.meta.env.VITE_SOCKET_URL ? serverId : undefined
   );
   const hasApi = !!import.meta.env.VITE_SOCKET_URL;
+  const alertSource = hasApi ? apiAlerts : (stats?.alerts ?? []);
   const totalAlertCount = hasApi
     ? apiAlertCount
-    : (stats?.alerts.filter((a) => !a.acknowledged).length ?? 0);
+    : alertSource.filter((a) => !a.acknowledged).length;
 
-  // Sound + push notification for new critical alerts
-  const prevAlertIds = useRef(new Set<string>());
+  // Shared AudioContext for alert sounds (resumed on first user click)
+  const audioCtxRef = useRef<AudioContext | null>(null);
   useEffect(() => {
-    const source = hasApi ? apiAlerts : (stats?.alerts ?? []);
-    const newCritical = source.filter(
-      (a) => a.severity === 'critical' && !prevAlertIds.current.has(a.id)
+    const handler = () => {
+      if (audioCtxRef.current?.state === 'suspended') {
+        audioCtxRef.current.resume();
+      }
+    };
+    document.addEventListener('click', handler, { once: true });
+    return () => document.removeEventListener('click', handler);
+  }, []);
+
+  // Alert sound + push notification for new critical alerts
+  const prevCriticalIds = useRef(new Set<string>());
+  useEffect(() => {
+    const newCritical = alertSource.filter(
+      (a) => a.severity === 'critical' && !prevCriticalIds.current.has(a.id)
     );
     for (const alert of newCritical) {
-      prevAlertIds.current.add(alert.id);
+      prevCriticalIds.current.add(alert.id);
+
       if (settings.soundEnabled) {
         try {
-          const ctx = new AudioContext();
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.frequency.value = 880;
-          gain.gain.value = 0.3;
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.2);
+          if (!audioCtxRef.current) {
+            audioCtxRef.current = new AudioContext();
+          }
+          const ctx = audioCtxRef.current;
+          if (ctx.state !== 'suspended') {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.frequency.value = 880;
+            gain.gain.value = 0.3;
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.3);
+          }
         } catch {}
       }
-      if (settings.notifications && 'Notification' in window && Notification.permission === 'granted') {
-        new Notification('Critical Alert', {
-          body: alert.message,
-          tag: alert.id,
-        });
+
+      if (settings.notifications && typeof Notification !== 'undefined') {
+        if (Notification.permission === 'granted') {
+          new Notification('Critical Alert', {
+            body: alert.message,
+            tag: alert.id,
+          });
+        } else if (Notification.permission === 'default') {
+          Notification.requestPermission().then((perm) => {
+            if (perm === 'granted') {
+              new Notification('Critical Alert', {
+                body: alert.message,
+                tag: alert.id,
+              });
+            }
+          });
+        }
       }
     }
-  }, [hasApi, apiAlerts, stats?.alerts, settings.soundEnabled, settings.notifications]);
-
-  // Request notification permission
-  useEffect(() => {
-    if (settings.notifications && 'Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-  }, [settings.notifications]);
+  }, [alertSource, settings.soundEnabled, settings.notifications]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -212,7 +235,10 @@ export default function App() {
           onTimeRangeChange={setTimeRange}
           connection={connection}
           onReconnect={reconnect}
-          alertCount={stats?.alerts.filter((a) => !a.acknowledged).length ?? 0}
+          alertCount={totalAlertCount}
+          alerts={alertSource}
+          onAcknowledgeAlert={hasApi ? apiAckAlert : (id) => {}}
+          onAcknowledgeAll={hasApi ? apiAckAll : () => {}}
         />
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
