@@ -5,12 +5,14 @@ import { AlertsService } from './alerts.service';
 import { AlertsController } from './alerts.controller';
 import { SettingsModule } from '../settings/settings.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { WebsocketModule } from '../websocket/websocket.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([AlertEntity]),
     SettingsModule,
     NotificationsModule,
+    WebsocketModule,
   ],
   providers: [AlertsService],
   controllers: [AlertsController],

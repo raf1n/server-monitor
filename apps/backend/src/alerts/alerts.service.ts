@@ -4,6 +4,7 @@ import { Repository, FindOptionsWhere, LessThan } from 'typeorm';
 import { AlertEntity } from '../database/entities/alert.entity';
 import { SettingsService } from '../settings/settings.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { StatsGateway } from '../websocket/stats.gateway';
 
 interface Thresholds {
   cpuCritical: number;
@@ -32,6 +33,7 @@ export class AlertsService {
     private readonly alertRepo: Repository<AlertEntity>,
     @Optional() private readonly settingsService?: SettingsService,
     @Optional() private readonly notificationsService?: NotificationsService,
+    @Optional() private readonly statsGateway?: StatsGateway,
   ) {}
 
   async findAll(params: {
@@ -211,6 +213,8 @@ export class AlertsService {
           message: alert.message,
           severity: alert.severity,
         });
+
+        this.statsGateway?.emitAlert(serverId, alert);
       } catch (err) {
         this.logger.warn(`Failed to create alert for ${serverId}: ${(err as Error).message}`);
       }

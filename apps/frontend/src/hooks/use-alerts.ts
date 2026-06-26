@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { io } from 'socket.io-client';
 import { api } from '@/lib/api';
 import type { AlertEvent } from '@/lib/types';
 
-const API_BASE = import.meta.env.VITE_SOCKET_URL || '';
-const POLL_MS = 5000;
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || '';
+const API_BASE = SOCKET_URL;
 
 interface UseAlertsResult {
   alerts: AlertEvent[];
@@ -19,7 +20,6 @@ export function useAlerts(serverId?: string): UseAlertsResult {
   const [alerts, setAlerts] = useState<AlertEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval>>();
 
   const fetchAlerts = useCallback(async () => {
     if (!API_BASE) {
@@ -52,9 +52,35 @@ export function useAlerts(serverId?: string): UseAlertsResult {
 
   useEffect(() => {
     fetchAlerts();
-    intervalRef.current = setInterval(fetchAlerts, POLL_MS);
-    return () => clearInterval(intervalRef.current);
-  }, [fetchAlerts]);
+
+    if (!SOCKET_URL) return;
+
+    const socket = io(SOCKET_URL, { transports: ['websocket'] });
+
+    socket.on('connect', () => {
+      if (serverId) socket.emit('subscribe', { serverId });
+    });
+
+    socket.on('alert', (alert: AlertEvent & { serverId: string }) => {
+      if (serverId && alert.serverId !== serverId) return;
+      setAlerts((prev) => [
+        {
+          id: alert.id,
+          title: alert.title,
+          message: alert.message,
+          severity: alert.severity,
+          timestamp: typeof alert.timestamp === 'number' ? alert.timestamp : new Date(alert.timestamp).getTime(),
+          source: alert.source,
+          acknowledged: alert.acknowledged,
+        },
+        ...prev,
+      ]);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [fetchAlerts, serverId]);
 
   const acknowledgeAlert = useCallback(async (id: string) => {
     if (!API_BASE) return;

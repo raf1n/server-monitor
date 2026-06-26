@@ -42,6 +42,10 @@ export class StatsGateway implements OnGatewayConnection, OnGatewayDisconnect, O
     });
   }
 
+  emitAlert(serverId: string, alert: { id: string; title: string; message: string; severity: string; timestamp: Date; source: string; acknowledged: boolean }) {
+    this.server.to(`server:${serverId}`).emit('alert', { ...alert, serverId });
+  }
+
   handleConnection(client: Socket) {
     console.log(`Client connected: ${client.id}`);
   }
