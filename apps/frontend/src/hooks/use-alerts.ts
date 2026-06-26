@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '@/lib/api';
 import type { AlertEvent } from '@/lib/types';
 
 const API_BASE = import.meta.env.VITE_SOCKET_URL || '';
+const POLL_MS = 5000;
 
 interface UseAlertsResult {
   alerts: AlertEvent[];
@@ -18,13 +19,13 @@ export function useAlerts(serverId?: string): UseAlertsResult {
   const [alerts, setAlerts] = useState<AlertEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval>>();
 
   const fetchAlerts = useCallback(async () => {
     if (!API_BASE) {
       setLoading(false);
       return;
     }
-    setLoading(true);
     setError(null);
     try {
       const data = await api.alerts.list({
@@ -51,6 +52,8 @@ export function useAlerts(serverId?: string): UseAlertsResult {
 
   useEffect(() => {
     fetchAlerts();
+    intervalRef.current = setInterval(fetchAlerts, POLL_MS);
+    return () => clearInterval(intervalRef.current);
   }, [fetchAlerts]);
 
   const acknowledgeAlert = useCallback(async (id: string) => {
