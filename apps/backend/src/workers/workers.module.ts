@@ -1,0 +1,23 @@
+import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
+import { MetricsProcessor } from './metrics.processor';
+import { AlertsModule } from '../alerts/alerts.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+
+export const INGEST_QUEUE = 'metrics-ingest';
+
+@Module({
+  imports: [
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: Number(process.env.REDIS_PORT) || 6379,
+      },
+    }),
+    BullModule.registerQueue({ name: INGEST_QUEUE }),
+    AlertsModule,
+    NotificationsModule,
+  ],
+  providers: [MetricsProcessor],
+})
+export class WorkersModule {}

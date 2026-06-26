@@ -1,0 +1,23 @@
+{
+  "name": "server-monitor",
+  "private": true,
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "esbuild",
+      "msgpackr-extract"
+    ]
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "dev:frontend": "pnpm --filter @server-monitor/frontend dev",
+    "dev:backend": "pnpm --filter @server-monitor/backend dev",
+    "dev:agent": "pnpm --filter @server-monitor/agent dev",
+    "build": "pnpm -r build",
+    "build:frontend": "pnpm --filter @server-monitor/frontend build",
+    "build:backend": "pnpm --filter @server-monitor/backend build",
+    "build:shared": "pnpm --filter @server-monitor/shared build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

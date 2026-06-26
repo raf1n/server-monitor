@@ -1,0 +1,26 @@
+{
+  "name": "@server-monitor/agent",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "bundle": "node bundle.mjs",
+    "start": "node dist/index.js",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "systeminformation": "^5.23.0",
+    "@server-monitor/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.2.2",
+    "tsx": "^4.7.0",
+    "esbuild": "^0.24.0",
+    "eslint": "^8.49.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0"
+  }
+}
