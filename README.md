@@ -60,24 +60,50 @@ pnpm dev:agent
 
 Open **http://localhost:5173** — runs in demo mode automatically if no backend is detected.
 
-### Ports
-
-| Service    | Port                                  |
-| ---------- | ------------------------------------- |
-| Frontend   | `5173`                                |
-| Backend    | `3300`                                |
-| PostgreSQL | `5434` (mapped from container `5432`) |
-| Redis      | `6379`                                |
-
 ## Deployment
 
-See **[DEPLOY.md](DEPLOY.md)** for full VPS deployment guide. There's also a one-command deploy script:
+### Server setup (one-time)
 
 ```bash
+# On your VPS — installs Docker, Node.js, builds frontend, starts backend
 DOMAIN=monitor.example.com ADMIN_PASSWORD=my-secret ./deploy.sh
 ```
 
-For nginx configuration samples (with and without SSL), see **[nginx.md](nginx.md)**.
+Then configure nginx (see [nginx.md](nginx.md)) and log in at `https://your-domain`.
+
+### Installing agents on servers
+
+After logging in, go to **API Keys** and create a key. Then on each server you want to monitor:
+
+```bash
+# Interactive — will prompt for API key, server ID, and interval
+curl -sSL https://your-domain/install.sh | bash
+```
+
+Or non-interactive:
+
+```bash
+API_KEY=your-key-here bash <(curl -sSL https://your-domain/install.sh)
+```
+
+This installs a systemd service that starts on boot and restarts on crash.
+
+**Agent commands:**
+```bash
+systemctl status server-monitor-agent
+journalctl -u server-monitor-agent -f
+systemctl restart server-monitor-agent
+systemctl stop server-monitor-agent
+```
+
+### Ports
+
+| Service | Port |
+|---|---|
+| Frontend | `5173` (dev) / `443` (prod via nginx) |
+| Backend | `3300` |
+| PostgreSQL | `5434` (dev) / internal only (prod) |
+| Redis | `6379` (dev) / internal only (prod) |
 
 ## Project Structure
 
