@@ -13,6 +13,9 @@ importers:
       '@server-monitor/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      dotenv:
+        specifier: ^16.4.0
+        version: 16.6.1
       systeminformation:
         specifier: ^5.23.0
         version: 5.31.11

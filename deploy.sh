@@ -109,7 +109,7 @@ else
     info "Running from repo directory: $INSTALL_DIR"
   else
     err "REPO_URL not set and not inside the repo directory."
-    err "Run this script from the repo root, or set REPO_URL=https://github.com/you/server-monitor.git"
+    err "Run this script from the repo root, or set REPO_URL=https://github.com/raf1n/server-monitor.git"
     exit 1
   fi
 fi
@@ -166,7 +166,7 @@ log "Backend containers started"
 # Wait for backend health
 info "Waiting for backend to be healthy..."
 for i in $(seq 1 30); do
-  if curl -sf http://localhost:3000/health >/dev/null 2>&1; then
+  if curl -sf http://localhost:3300/health >/dev/null 2>&1; then
     log "Backend is healthy"
     break
   fi
@@ -188,7 +188,7 @@ echo ""
 echo -e "  Dashboard:  ${CYAN}https://${DOMAIN}${NC}"
 echo -e "  Username:   ${CYAN}admin${NC}"
 echo -e "  Password:   ${CYAN}${ADMIN_PASSWORD}${NC}"
-echo -e "  Backend:    ${CYAN}http://localhost:3000${NC}"
+echo -e "  Backend:    ${CYAN}http://localhost:3300${NC}"
 echo ""
 echo -e "  ${YELLOW}Next steps:${NC}"
 echo -e "  1. Configure nginx — see nginx.md"

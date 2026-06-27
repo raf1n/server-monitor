@@ -1,6 +1,6 @@
 # Nginx Configuration
 
-Sample configs for nginx running on the host. The backend runs in Docker on `localhost:3000`, frontend static files are at `/var/www/server-monitor/`.
+Sample configs for nginx running on the host. The backend runs in Docker on `localhost:3300`, frontend static files are at `/var/www/server-monitor/`.
 
 ---
 
@@ -30,7 +30,7 @@ server {
 
     # Backend API
     location /api/ {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3300;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -40,14 +40,14 @@ server {
 
     # Public endpoints (no /api/ prefix — excluded in backend)
     location ~ ^/(ingest|health|agent\.js|install\.sh|agent-info)$ {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3300;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
 
     # WebSocket
     location /socket.io/ {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3300;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -94,7 +94,7 @@ server {
 
     # Backend API
     location /api/ {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3300;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -104,14 +104,14 @@ server {
 
     # Public endpoints (no /api/ prefix — excluded in backend)
     location ~ ^/(ingest|health|agent\.js|install\.sh|agent-info)$ {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3300;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
 
     # WebSocket
     location /socket.io/ {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3300;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -162,7 +162,7 @@ ufw enable
 
 ```bash
 # Backend health
-curl http://localhost:3000/health
+curl http://localhost:3300/health
 
 # Frontend
 curl -I http://monitor.your-domain.com     # without SSL

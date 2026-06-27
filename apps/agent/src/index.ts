@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { Collector } from "./collector";
 import { Sender } from "./sender";
 

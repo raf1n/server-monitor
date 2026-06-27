@@ -15,5 +15,5 @@ FROM node:22-alpine
 WORKDIR /app
 COPY --from=builder /app/apps/frontend/dist ./dist
 RUN npm install -g serve
-EXPOSE 80
-CMD ["serve", "dist", "-p", "80", "--no-clipboard", "--single"]
+EXPOSE 5173
+CMD ["serve", "dist", "-p", "5173", "--no-clipboard", "--single"]

@@ -7,6 +7,9 @@
       "bcrypt",
       "esbuild",
       "msgpackr-extract"
+    ],
+    "ignoredBuiltDependencies": [
+      "bcrypt"
     ]
   },
   "scripts": {

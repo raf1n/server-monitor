@@ -11,9 +11,9 @@ Client (browser)
 Nginx (port 443, SSL termination)
   ├── /             → serves dist/index.html (React SPA)
   ├── /assets/*     → serves static files from dist/
-  ├── /api/*        → proxy_pass http://localhost:3000
-  ├── /socket.io/*  → proxy_pass http://localhost:3000 (WebSocket)
-  └── /ingest, /health, /agent.js, /install.sh → proxy_pass http://localhost:3000
+  ├── /api/*        → proxy_pass http://localhost:3300
+  ├── /socket.io/*  → proxy_pass http://localhost:3300 (WebSocket)
+  └── /ingest, /health, /agent.js, /install.sh → proxy_pass http://localhost:3300
   │
   ▼
 Backend (Docker, port 3000)
@@ -106,7 +106,7 @@ server {
 
     # Backend API
     location /api/ {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3300;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -116,14 +116,14 @@ server {
 
     # Public endpoints (no /api/ prefix — excluded in backend)
     location ~ ^/(ingest|health|agent\.js|install\.sh|agent-info)$ {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3300;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
 
     # WebSocket
     location /socket.io/ {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3300;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";

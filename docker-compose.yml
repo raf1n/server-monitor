@@ -33,7 +33,7 @@ services:
       dockerfile: apps/backend/Dockerfile
     environment:
       NODE_ENV: development
-      PORT: 3000
+      PORT: 3300
       DB_HOST: postgres
       DB_PORT: 5432
       DB_USER: postgres
@@ -54,19 +54,19 @@ services:
       redis:
         condition: service_healthy
     ports:
-      - "3000:3000"
+      - "3300:3300"
 
   frontend:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
       args:
-        VITE_API_URL: http://localhost:3000
-        VITE_SOCKET_URL: http://localhost:3000
+        VITE_API_URL: http://localhost:3300
+        VITE_SOCKET_URL: http://localhost:3300
     depends_on:
       - backend
     ports:
-      - "5173:80"
+      - "5173:5173"
 
 volumes:
   pgdata:

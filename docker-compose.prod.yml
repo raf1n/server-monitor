@@ -4,10 +4,10 @@ services:
       context: .
       dockerfile: apps/backend/Dockerfile
     ports:
-      - "${BACKEND_PORT:-3000}:3000"
+      - "${BACKEND_PORT:-3300}:3300"
     environment:
       NODE_ENV: production
-      PORT: 3000
+      PORT: 3300
       DB_HOST: postgres
       DB_PORT: 5432
       DB_USER: ${DB_USER:-postgres}
@@ -36,7 +36,7 @@ services:
           "--no-verbose",
           "--tries=1",
           "--spider",
-          "http://localhost:3000/health",
+          "http://localhost:3300/health",
         ]
       interval: 30s
       timeout: 10s
