@@ -13,6 +13,11 @@ export const INGEST_QUEUE = 'metrics-ingest';
         host: process.env.REDIS_HOST || 'localhost',
         port: Number(process.env.REDIS_PORT) || 6379,
       },
+      defaultJobOptions: {
+        removeOnComplete: { age: 3600 },
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 2000 },
+      },
     }),
     BullModule.registerQueue({ name: INGEST_QUEUE }),
     AlertsModule,

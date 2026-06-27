@@ -9,7 +9,7 @@ Collects CPU, memory, disk, network, and process metrics from multiple servers v
 ```
 ┌──────────┐   POST /ingest    ┌──────────┐   subscribe   ┌──────────┐
 │  Agent   │ ──────────────────→│ Backend  │ ←──────────── │ Frontend │
-│ (per VPS)│   (API key auth)   │ (NestJS) │  (Socket.IO)  │ (React)  │
+│ (per VPS)│   (per-server key) │ (NestJS) │  (Socket.IO)  │ (React)  │
 └──────────┘                    ├──────────┤               └──────────┘
                                 │  Redis   │
                                 │ (BullMQ) │
@@ -41,6 +41,16 @@ pnpm dev:agent
 
 Open **http://localhost:5173** — runs in demo mode automatically if no backend is detected.
 
+## Deployment
+
+See **[DEPLOY.md](DEPLOY.md)** for full VPS deployment guide. There's also a one-command deploy script:
+
+```bash
+DOMAIN=monitor.example.com ADMIN_PASSWORD=my-secret ./deploy.sh
+```
+
+For nginx configuration samples (with and without SSL), see **[nginx.md](nginx.md)**.
+
 ## Project Structure
 
 ```
@@ -58,12 +68,15 @@ server-monitor/
 │   │   └── src/
 │   │       ├── main.ts
 │   │       ├── app.module.ts
+│   │       ├── auth/             # JWT auth, roles guard, login
+│   │       ├── api-keys/         # Per-server API key management
+│   │       ├── users/            # User management + registration
 │   │       ├── ingest/           # POST /ingest endpoint
 │   │       ├── workers/          # BullMQ metrics processor
 │   │       ├── websocket/        # Socket.IO real-time gateway
 │   │       ├── servers/          # Server registry API
 │   │       ├── alerts/           # Alerts CRUD + threshold evaluation
-│   │       ├── notifications/    # Email/webhook/Telegram dispatch
+│   │       ├── notifications/    # Email/webhook/Telegram/Discord dispatch
 │   │       ├── settings/         # Key-value settings store
 │   │       ├── database/         # TypeORM entities + TimescaleDB setup
 │   │       ├── redis/            # Redis pub/sub clients
@@ -74,9 +87,9 @@ server-monitor/
 │           ├── App.tsx
 │           ├── components/dashboard/  # UI components
 │           │   ├── pages/             # Page-level views
-│           │   └── *.tsx             # Dashboard widgets
-│           ├── hooks/                # React hooks
-│           └── lib/                  # Types, utils, mock data
+│           │   └── *.tsx              # Dashboard widgets
+│           ├── hooks/                 # React hooks
+│           └── lib/                   # Types, utils, mock data
 │
 └── packages/
     └── shared/         # Shared TypeScript types
@@ -102,40 +115,55 @@ server-monitor/
 |---|---|---|
 | `SERVER_ID` | `srv-prod-01` | Unique server identifier |
 | `API_URL` | `http://localhost:3000` | Backend ingest endpoint |
-| `API_KEY` | `dev-agent-key-123` | API key for authentication |
+| `API_KEY` | — | API key (per-server key from dashboard, or master key) |
 | `INTERVAL_MS` | `2000` | Collection interval in ms |
 
-### Backend (`apps/backend/.env`)
+### Root `.env` (production)
 
-| Variable | Default | Description |
+| Variable | Required | Description |
 |---|---|---|
-| `PORT` | `3000` | HTTP server port |
-| `DB_HOST` | `localhost` | PostgreSQL host |
-| `DB_PORT` | `5434` | PostgreSQL port |
-| `DB_USER` | `postgres` | Database user |
-| `DB_PASSWORD` | `postgres` | Database password |
-| `DB_NAME` | `server_monitor` | Database name |
-| `REDIS_HOST` | `localhost` | Redis host |
-| `REDIS_PORT` | `6379` | Redis port |
-| `AGENT_API_KEY` | — | API key for agent auth |
-| `METRICS_RETENTION_DAYS` | `7` | Auto-drop snapshots older than N days |
+| `JWT_SECRET` | Yes | Secret for signing JWT tokens (min 32 chars in production) |
+| `ADMIN_PASSWORD` | Yes | Admin user password (username defaults to `admin`) |
+| `CORS_ORIGIN` | No | Frontend origin for CORS (e.g. `https://monitor.example.com`) |
+| `AGENT_API_KEY` | No | Master API key — works for all agents (per-server keys preferred) |
+| `ALLOW_REGISTRATION` | No | `true` to allow open user registration (default: `false`) |
+| `METRICS_RETENTION_DAYS` | No | Auto-drop snapshots older than N days (default: `7`) |
 
 ### Frontend (`apps/frontend/.env`)
 
 | Variable | Default | Description |
 |---|---|---|
-| `VITE_SOCKET_URL` | — | Backend URL for WebSocket + REST (empty = demo mode) |
+| `VITE_API_URL` | — | Backend URL for REST (empty = same-origin `/api/`) |
+| `VITE_SOCKET_URL` | — | Backend URL for WebSocket (empty = same-origin `/socket.io/`) |
 
 ### Notification Channels
 
-Set these in `apps/backend/.env` to enable alert dispatch:
+Set these in `.env` to enable alert dispatch:
 
 | Variable | Channel |
 |---|---|
-| `NOTIFICATION_EMAIL` | Email address for alert notifications (logged only) |
-| `WEBHOOK_URL` | HTTP POST URL for webhook dispatch |
+| `NOTIFICATION_DISCORD_WEBHOOK` | Discord webhook URL |
+| `WEBHOOK_URL` | HTTP POST URL for generic webhook dispatch |
 | `TELEGRAM_BOT_TOKEN` | Telegram bot token |
 | `TELEGRAM_CHAT_ID` | Telegram chat/group ID |
+
+## Authentication
+
+### Users
+
+- First admin user is auto-created from `ADMIN_PASSWORD` on first boot
+- Open registration is disabled by default (`ALLOW_REGISTRATION=false`)
+- Admins can create viewer accounts via `POST /api/users/create`
+- JWT tokens expire after 24 hours
+
+### Agent API Keys
+
+Two authentication methods for agents:
+
+1. **Per-server keys** (recommended) — created from the dashboard's API Keys page, optionally scoped to a specific server ID, revocable individually
+2. **Master key** — set `AGENT_API_KEY` in `.env`, works for all servers, useful for your own infrastructure
+
+Both can coexist. The ingest endpoint checks the master key first, then per-server keys in the database.
 
 ## Alert Thresholds
 
@@ -152,9 +180,20 @@ Save via the Settings page in the dashboard, or directly via `PUT /settings`.
 
 ## API Endpoints
 
+### Public (no auth)
+
 | Method | Path | Description |
 |---|---|---|
 | `POST` | `/ingest` | Receive agent metrics (API key auth) |
+| `GET` | `/health` | Health check (DB + Redis) |
+| `POST` | `/auth/login` | Login, returns JWT |
+| `GET` | `/agent.js` | Download bundled agent |
+| `GET` | `/install.sh` | Download agent install script |
+
+### Authenticated (JWT required)
+
+| Method | Path | Description |
+|---|---|---|
 | `GET` | `/servers` | List all registered servers |
 | `GET` | `/servers/:id/metrics` | Historical metric points |
 | `GET` | `/servers/:id/processes` | Latest process snapshot |
@@ -164,6 +203,18 @@ Save via the Settings page in the dashboard, or directly via `PUT /settings`.
 | `GET` | `/settings` | Get all settings |
 | `PUT` | `/settings` | Save a setting |
 | `GET` | `/notifications` | Notification history |
+| `GET` | `/users/me` | Current user profile |
+| `PATCH` | `/users/me` | Update profile |
+
+### Admin only
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/users/create` | Create a viewer account |
+| `GET` | `/api-keys` | List API keys |
+| `POST` | `/api-keys` | Create a new API key |
+| `POST` | `/api-keys/:id/revoke` | Revoke an API key |
+| `DELETE` | `/api-keys/:id` | Delete an API key |
 
 ## Tech Stack
 

@@ -1,4 +1,4 @@
-import { Module, Global } from '@nestjs/common';
+import { Module, Global, OnModuleDestroy, Logger, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
@@ -10,15 +10,37 @@ function redisFactory(config: ConfigService): Redis {
     host: config.get('REDIS_HOST', 'localhost'),
     port: config.get('REDIS_PORT', 6379),
     maxRetriesPerRequest: null,
+    lazyConnect: true,
   });
 }
 
+const publisherProvider = {
+  provide: REDIS_PUBLISHER,
+  inject: [ConfigService],
+  useFactory: redisFactory,
+};
+
+const subscriberProvider = {
+  provide: REDIS_SUBSCRIBER,
+  inject: [ConfigService],
+  useFactory: redisFactory,
+};
+
 @Global()
 @Module({
-  providers: [
-    { provide: REDIS_PUBLISHER, inject: [ConfigService], useFactory: redisFactory },
-    { provide: REDIS_SUBSCRIBER, inject: [ConfigService], useFactory: redisFactory },
-  ],
+  providers: [publisherProvider, subscriberProvider],
   exports: [REDIS_PUBLISHER, REDIS_SUBSCRIBER],
 })
-export class RedisModule {}
+export class RedisModule implements OnModuleDestroy {
+  private readonly logger = new Logger(RedisModule.name);
+
+  constructor(
+    @Inject(REDIS_PUBLISHER) private readonly pub: Redis,
+    @Inject(REDIS_SUBSCRIBER) private readonly sub: Redis,
+  ) {}
+
+  async onModuleDestroy() {
+    this.logger.log('Closing Redis connections...');
+    await Promise.allSettled([this.pub.quit(), this.sub.quit()]);
+  }
+}

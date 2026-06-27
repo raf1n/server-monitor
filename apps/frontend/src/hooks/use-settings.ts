@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 
 const STORAGE_KEY = 'server-monitor-settings';
-const API_BASE = import.meta.env.VITE_SOCKET_URL || '';
+const API_HOST: string | undefined = import.meta.env.VITE_API_URL;
 
 export interface AppSettings {
   refreshInterval: string;
@@ -61,12 +61,15 @@ export function useSettings(serverId?: string): UseSettingsResult {
   }, []);
 
   const saveToBackend = useCallback(async () => {
-    if (!API_BASE) return;
+    if (!API_HOST) return;
     try {
-      for (const [key, value] of Object.entries(settings)) {
-        await api.settings.set(key, String(value), serverId);
-      }
-    } catch {}
+      const entries = Object.fromEntries(
+        Object.entries(settings).map(([k, v]) => [k, String(v)]),
+      );
+      await api.settings.setAll(entries, serverId);
+    } catch (err) {
+      console.warn('Failed to save settings to backend:', err);
+    }
   }, [settings, serverId]);
 
   const resetDefaults = useCallback(() => {

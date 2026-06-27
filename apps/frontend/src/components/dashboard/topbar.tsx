@@ -36,7 +36,7 @@ import type { ServerInfo, ServerStatus, TimeRange, AlertEvent } from "@/lib/type
 import type { ConnectionState } from "@/hooks/use-stats";
 import { api } from "@/lib/api";
 
-const API_BASE = import.meta.env.VITE_SOCKET_URL || '';
+const API_HOST: string | undefined = import.meta.env.VITE_API_URL;
 
 interface TopbarProps {
   servers: ServerInfo[];
@@ -51,6 +51,11 @@ interface TopbarProps {
   alerts?: AlertEvent[];
   onAcknowledgeAlert?: (id: string) => void;
   onAcknowledgeAll?: () => void;
+  onLogout?: () => void;
+  username?: string;
+  email?: string | null;
+  role?: string;
+  onNavigate?: (id: string) => void;
 }
 
 const STATUS_META: Record<
@@ -98,6 +103,11 @@ export function Topbar({
   alerts = [],
   onAcknowledgeAlert,
   onAcknowledgeAll,
+  onLogout,
+  username,
+  email,
+  role,
+  onNavigate,
 }: TopbarProps) {
   const selectedServer =
     servers.find((s) => s.id === selectedServerId) ?? servers[0];
@@ -106,7 +116,7 @@ export function Topbar({
     : STATUS_META.online;
   const connMeta = CONNECTION_META[connection];
 
-  const hasApi = !!API_BASE;
+  const hasApi = API_HOST !== undefined;
   const unacked = alerts.filter((a) => !a.acknowledged);
   const recent = [...unacked].sort((a, b) => b.timestamp - a.timestamp).slice(0, 5);
 
@@ -270,7 +280,7 @@ export function Topbar({
             <button className="flex items-center gap-2 rounded-md border border-border bg-secondary/50 px-1.5 py-1 transition-colors hover:bg-accent">
               <Avatar className="h-7 w-7">
                 <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">
-                  AD
+                  {(username || 'U').charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
@@ -279,21 +289,26 @@ export function Topbar({
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
               <div className="flex flex-col">
-                <span className="text-sm font-medium">Alex Doe</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{username || 'User'}</span>
+                  <Badge variant={role === 'admin' ? 'default' : 'secondary'} className="text-[10px] capitalize">
+                    {role || 'viewer'}
+                  </Badge>
+                </div>
                 <span className="text-xs text-muted-foreground">
-                  alex@servermonitor.io
+                  {email || ''}
                 </span>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onNavigate?.('profile')}>
               <User className="mr-2 h-4 w-4" /> Profile
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onNavigate?.('settings')}>
               <Settings className="mr-2 h-4 w-4" /> Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem className="text-destructive" onClick={onLogout}>
               <LogOut className="mr-2 h-4 w-4" /> Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>

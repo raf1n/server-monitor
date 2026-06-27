@@ -3,8 +3,8 @@ import { io } from 'socket.io-client';
 import { api } from '@/lib/api';
 import type { AlertEvent } from '@/lib/types';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || '';
-const API_BASE = SOCKET_URL;
+const SOCKET_URL: string | undefined = import.meta.env.VITE_SOCKET_URL;
+const API_HOST: string | undefined = import.meta.env.VITE_API_URL;
 
 interface UseAlertsResult {
   alerts: AlertEvent[];
@@ -22,7 +22,7 @@ export function useAlerts(serverId?: string): UseAlertsResult {
   const [error, setError] = useState<string | null>(null);
 
   const fetchAlerts = useCallback(async () => {
-    if (!API_BASE) {
+    if (API_HOST === undefined) {
       setLoading(false);
       return;
     }
@@ -53,9 +53,10 @@ export function useAlerts(serverId?: string): UseAlertsResult {
   useEffect(() => {
     fetchAlerts();
 
-    if (!SOCKET_URL) return;
+    if (SOCKET_URL === undefined) return;
 
-    const socket = io(SOCKET_URL, { transports: ['websocket'] });
+    const token = (() => { try { return localStorage.getItem('auth_token'); } catch { return null; } })();
+    const socket = io(SOCKET_URL || undefined, { transports: ['websocket'], auth: { token } });
 
     socket.on('connect', () => {
       if (serverId) socket.emit('subscribe', { serverId });
@@ -83,7 +84,7 @@ export function useAlerts(serverId?: string): UseAlertsResult {
   }, [fetchAlerts, serverId]);
 
   const acknowledgeAlert = useCallback(async (id: string) => {
-    if (!API_BASE) return;
+    if (API_HOST === undefined) return;
     try {
       await api.alerts.acknowledge(id);
       setAlerts((prev) =>
@@ -95,7 +96,7 @@ export function useAlerts(serverId?: string): UseAlertsResult {
   }, []);
 
   const acknowledgeAll = useCallback(async () => {
-    if (!API_BASE) return;
+    if (API_HOST === undefined) return;
     try {
       await api.alerts.acknowledgeAll(serverId);
       setAlerts((prev) => prev.map((a) => ({ ...a, acknowledged: true })));

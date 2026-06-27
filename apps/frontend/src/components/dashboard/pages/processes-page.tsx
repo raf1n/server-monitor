@@ -23,9 +23,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { api } from "@/lib/api";
 import type { ProcessInfo, ServerStats } from "@/lib/types";
-
-const API_BASE = import.meta.env.VITE_SOCKET_URL || "";
 
 interface ProcessesPageProps {
   stats: ServerStats | null;
@@ -97,26 +96,23 @@ export function ProcessesPage({
   const [viewFilter, setViewFilter] = useState<"cpu" | "memory" | "pm2">("cpu");
   const [apiProcesses, setApiProcesses] = useState<ProcessInfo[]>([]);
   const [apiLoading, setApiLoading] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval>>();
 
   useEffect(() => {
-    if (!API_BASE || !serverId) {
+    if (import.meta.env.VITE_API_URL === undefined || !serverId) {
       setApiProcesses([]);
       return;
     }
 
-    const fetchProcesses = () => {
-      setApiLoading(true);
-      fetch(`${API_BASE}/servers/${serverId}/processes`)
-        .then((res) => res.json())
-        .then((data) => setApiProcesses(Array.isArray(data) ? data : []))
-        .catch(() => {})
-        .finally(() => setApiLoading(false));
-    };
-
-    fetchProcesses();
-    intervalRef.current = setInterval(fetchProcesses, 5000);
-    return () => clearInterval(intervalRef.current);
+    setApiLoading(true);
+    const controller = new AbortController();
+    api.processes.list(serverId, controller.signal)
+      .then((data) => setApiProcesses(Array.isArray(data) ? data : []))
+      .catch((err) => {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        console.warn('Failed to fetch processes:', err);
+      })
+      .finally(() => setApiLoading(false));
+    return () => controller.abort();
   }, [serverId]);
 
   const processes = stats?.processes ?? apiProcesses;
@@ -150,7 +146,8 @@ export function ProcessesPage({
       else if (sortKey === "status") cmp = a.status.localeCompare(b.status);
       else if (sortKey === "uptime") cmp = a.uptime - b.uptime;
       else if (sortKey === "restarts") cmp = a.restarts - b.restarts;
-      else cmp = (a[sortKey] as number) - (b[sortKey] as number);
+      else if (sortKey === "cpu") cmp = a.cpu - b.cpu;
+      else cmp = a.memory - b.memory;
       return sortDir === "asc" ? cmp : -cmp;
     });
     return list;
@@ -332,6 +329,7 @@ export function ProcessesPage({
                 placeholder="Filter processes..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                aria-label="Filter processes"
                 className="h-9 w-full border-border bg-secondary/50 pl-9 text-sm sm:w-52"
               />
             </div>

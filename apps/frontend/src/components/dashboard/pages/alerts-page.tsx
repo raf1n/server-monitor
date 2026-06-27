@@ -72,7 +72,7 @@ export function AlertsPage({ stats, loading, serverId }: AlertsPageProps) {
   const [severityFilter, setSeverityFilter] = useState<Severity | 'all'>('all');
   const [showAcknowledged, setShowAcknowledged] = useState(false);
 
-  const hasApi = !!import.meta.env.VITE_SOCKET_URL;
+  const hasApi = import.meta.env.VITE_API_URL !== undefined;
   const sourceAlerts = hasApi ? apiAlerts : (stats?.alerts ?? []);
   const isLiveLoading = loading || apiLoading;
 

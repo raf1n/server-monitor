@@ -6,10 +6,11 @@ import { generateDemoStats, nextDemoTick, DEMO_SERVERS } from '@/lib/mock-data';
 import type { MetricPoint, ServerStats, TimeRange } from '@/lib/types';
 import { TIME_RANGE_POINTS } from '@/lib/types';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || '';
+const SOCKET_URL: string | undefined = import.meta.env.VITE_SOCKET_URL;
 const STATS_EVENT = 'stats';
 
-const API_BASE = import.meta.env.VITE_SOCKET_URL || '';
+const API_HOST: string | undefined = import.meta.env.VITE_API_URL;
+const API_PREFIX = '/api';
 
 export type ConnectionState = 'connecting' | 'connected' | 'disconnected' | 'demo';
 
@@ -41,11 +42,15 @@ export function useStats(serverId: string, timeRange: TimeRange = '5m', options?
   useEffect(() => { optionsRef.current = options; }, [options]);
 
   const fetchBackendHistory = useCallback(async () => {
-    if (!API_BASE) return;
     try {
       const range = timeRangeRef.current;
       const limit = TIME_RANGE_POINTS[range];
-      const res = await fetch(`${API_BASE}/servers/${serverIdRef.current}/metrics?range=${range}&limit=${limit}`);
+      const token = (() => { try { return localStorage.getItem('auth_token'); } catch { return null; } })();
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      if (API_HOST === undefined) return;
+      const url = `${API_HOST ?? ''}${API_PREFIX}/servers/${serverIdRef.current}/metrics?range=${range}&limit=${limit}`;
+      const res = await fetch(url, { headers });
       if (!res.ok) return;
       const data: MetricPoint[] = await res.json();
       if (Array.isArray(data) && data.length > 0) {
@@ -88,7 +93,7 @@ export function useStats(serverId: string, timeRange: TimeRange = '5m', options?
       socketRef.current = null;
     }
 
-    if (!SOCKET_URL) {
+    if (SOCKET_URL === undefined) {
       setConnection('demo');
       const server = DEMO_SERVERS.find((s) => s.id === serverIdRef.current) ?? DEMO_SERVERS[0];
       const initial = generateDemoStats(server);
@@ -100,10 +105,12 @@ export function useStats(serverId: string, timeRange: TimeRange = '5m', options?
 
     setConnection('connecting');
     const opts = optionsRef.current ?? {};
-    const socket = io(SOCKET_URL, {
+    const token = (() => { try { return localStorage.getItem('auth_token'); } catch { return null; } })();
+    const socket = io(SOCKET_URL || undefined, {
       transports: ['websocket'],
       reconnection: opts.autoReconnect !== false,
       reconnectionAttempts: 5,
+      auth: { token },
     });
     socketRef.current = socket;
 

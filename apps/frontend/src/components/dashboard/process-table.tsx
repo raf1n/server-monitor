@@ -203,6 +203,7 @@ export function ProcessTable({
               placeholder="Filter processes..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              aria-label="Filter processes"
               className="h-9 w-full border-border bg-secondary/50 pl-9 text-sm sm:w-56"
             />
           </div>

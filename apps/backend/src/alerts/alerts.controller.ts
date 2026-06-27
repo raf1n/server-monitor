@@ -1,6 +1,7 @@
 import { Controller, Get, Patch, Delete, Param, Query, Body, Logger, HttpCode, HttpStatus } from '@nestjs/common';
 import { AlertsService } from './alerts.service';
 import { AlertEntity } from '../database/entities/alert.entity';
+import { ListAlertsQuery, CountAlertsQuery, AcknowledgeAllAlertsQuery } from '../dtos/alerts.dto';
 
 @Controller('alerts')
 export class AlertsController {
@@ -9,32 +10,22 @@ export class AlertsController {
   constructor(private readonly alerts: AlertsService) {}
 
   @Get()
-  async findAll(
-    @Query('serverId') serverId?: string,
-    @Query('severity') severity?: string,
-    @Query('acknowledged') acknowledged?: string,
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
-  ) {
+  async findAll(@Query() query: ListAlertsQuery) {
     return this.alerts.findAll({
-      serverId,
-      severity: severity && ['critical', 'warning', 'info'].includes(severity) ? severity : undefined,
-      acknowledged: acknowledged !== undefined ? acknowledged === 'true' : undefined,
-      limit: limit ? parseInt(limit, 10) : 100,
-      offset: offset ? parseInt(offset, 10) : 0,
+      serverId: query.serverId,
+      severity: query.severity && ['critical', 'warning', 'info'].includes(query.severity) ? query.severity : undefined,
+      acknowledged: query.acknowledged !== undefined ? query.acknowledged === 'true' : undefined,
+      limit: query.limit ? parseInt(query.limit, 10) : 100,
+      offset: query.offset ? parseInt(query.offset, 10) : 0,
     });
   }
 
   @Get('count')
-  async count(
-    @Query('serverId') serverId?: string,
-    @Query('acknowledged') acknowledged?: string,
-    @Query('severity') severity?: string,
-  ) {
+  async count(@Query() query: CountAlertsQuery) {
     const count = await this.alerts.count({
-      serverId,
-      severity,
-      acknowledged: acknowledged !== undefined ? acknowledged === 'true' : undefined,
+      serverId: query.serverId,
+      severity: query.severity,
+      acknowledged: query.acknowledged !== undefined ? query.acknowledged === 'true' : undefined,
     });
     return { count };
   }
@@ -54,8 +45,8 @@ export class AlertsController {
   }
 
   @Patch('acknowledge-all')
-  async acknowledgeAll(@Query('serverId') serverId?: string) {
-    const count = await this.alerts.acknowledgeAll(serverId);
+  async acknowledgeAll(@Query() query: AcknowledgeAllAlertsQuery) {
+    const count = await this.alerts.acknowledgeAll(query.serverId);
     return { success: true, count };
   }
 

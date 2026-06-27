@@ -1,8 +1,9 @@
-import { Controller, Get, Param, Query, Logger } from '@nestjs/common';
+import { Controller, Get, Param, Query, Logger, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan } from 'typeorm';
 import { ServersService } from './servers.service';
 import { MetricSnapshotEntity } from '../database/entities/metric-snapshot.entity';
+import { ListMetricsQuery } from '../dtos/servers.dto';
 
 const RANGE_TO_MS: Record<string, number> = {
   '5m': 5 * 60 * 1000,
@@ -17,7 +18,7 @@ export class ServersController {
 
   constructor(
     private readonly servers: ServersService,
-    @InjectRepository(MetricSnapshotEntity)
+    @Optional() @InjectRepository(MetricSnapshotEntity)
     private readonly metricRepo?: Repository<MetricSnapshotEntity>,
   ) {}
 
@@ -35,7 +36,8 @@ export class ServersController {
         order: { timestamp: 'DESC' },
       });
       return snapshot?.processes || [];
-    } catch {
+    } catch (err) {
+      this.logger.error(`Failed to fetch processes for ${serverId}: ${(err as Error).message}`);
       return [];
     }
   }
@@ -43,20 +45,19 @@ export class ServersController {
   @Get(':serverId/metrics')
   async getMetrics(
     @Param('serverId') serverId: string,
-    @Query('range') range?: string,
-    @Query('limit') limit?: string,
+    @Query() query: ListMetricsQuery,
   ) {
     if (!this.metricRepo) return [];
     try {
       const where: any = { serverId };
-      const rangeMs = range ? RANGE_TO_MS[range] : undefined;
+      const rangeMs = query.range ? RANGE_TO_MS[query.range] : undefined;
       if (rangeMs) {
         where.timestamp = MoreThan(new Date(Date.now() - rangeMs));
       }
       const snapshots = await this.metricRepo.find({
         where,
         order: { timestamp: 'DESC' },
-        take: Math.min(Number(limit) || 200, 500),
+        take: Math.min(Number(query.limit) || 200, 500),
       });
       return snapshots.reverse().map((s) => ({
         timestamp: s.timestamp.getTime(),
@@ -66,7 +67,8 @@ export class ServersController {
         networkIn: s.networkIn,
         networkOut: s.networkOut,
       }));
-    } catch {
+    } catch (err) {
+      this.logger.error(`Failed to fetch metrics for ${serverId}: ${(err as Error).message}`);
       return [];
     }
   }

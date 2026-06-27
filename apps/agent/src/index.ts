@@ -6,7 +6,7 @@ function parseArgs() {
   const config = {
     serverId: process.env.SERVER_ID || "srv-prod-01",
     apiUrl: process.env.API_URL || "http://localhost:3000",
-    apiKey: process.env.API_KEY || "dev-agent-key-123",
+    apiKey: process.env.API_KEY || "",
     interval: Number(process.env.INTERVAL_MS) || 2000,
   };
   for (let i = 0; i < args.length; i++) {
@@ -48,6 +48,11 @@ Environment variables (fallback):
 }
 
 const { serverId, apiUrl, apiKey, interval } = parseArgs();
+
+if (!apiKey) {
+  console.error('Error: API key is required. Set --key flag or API_KEY env var.');
+  process.exit(1);
+}
 
 const collector = new Collector();
 const sender = new Sender(apiUrl, apiKey);

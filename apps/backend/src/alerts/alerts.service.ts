@@ -1,4 +1,4 @@
-import { Injectable, Logger, Optional } from '@nestjs/common';
+import { Injectable, Logger, Optional, OnModuleDestroy } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, LessThan } from 'typeorm';
 import { AlertEntity } from '../database/entities/alert.entity';
@@ -23,10 +23,11 @@ const DEFAULT_THRESHOLDS: Thresholds = {
 };
 
 @Injectable()
-export class AlertsService {
+export class AlertsService implements OnModuleDestroy {
   private readonly logger = new Logger(AlertsService.name);
   // Track last-fired timestamp per server+alertKey for cooldown
   private lastFired = new Map<string, number>();
+  private cleanupTimer: ReturnType<typeof setInterval>;
 
   constructor(
     @InjectRepository(AlertEntity)
@@ -34,7 +35,13 @@ export class AlertsService {
     @Optional() private readonly settingsService?: SettingsService,
     @Optional() private readonly notificationsService?: NotificationsService,
     @Optional() private readonly statsGateway?: StatsGateway,
-  ) {}
+  ) {
+    this.cleanupTimer = setInterval(() => this.evictStale(), 60_000);
+  }
+
+  onModuleDestroy() {
+    clearInterval(this.cleanupTimer);
+  }
 
   async findAll(params: {
     serverId?: string;
@@ -220,9 +227,12 @@ export class AlertsService {
       }
     }
 
-    // Clean up stale keys for this server
+  }
+
+  private evictStale() {
+    const now = Date.now();
     for (const [key, ts] of this.lastFired) {
-      if (key.endsWith(`:${serverId}`) && now - ts > cooldownMs * 2) {
+      if (now - ts > 600_000) { // 10 min stale cleanup
         this.lastFired.delete(key);
       }
     }

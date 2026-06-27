@@ -7,17 +7,18 @@ import {
 import { Response } from 'express';
 import { join } from 'node:path';
 import { readFileSync } from 'node:fs';
+import { Public } from '../auth/public.decorator';
 
+@Public()
 @Controller()
 export class AgentDistributionController {
   private readonly agentDistDir: string;
   private readonly controllerDir: string;
 
   constructor() {
-    this.agentDistDir = join(
-      __dirname, '..', '..', '..', '..',
-      'agent', 'dist',
-    );
+    this.agentDistDir =
+      process.env.AGENT_DIST_DIR ||
+      join(__dirname, '..', '..', '..', 'agent', 'dist');
     this.controllerDir = __dirname;
   }
 

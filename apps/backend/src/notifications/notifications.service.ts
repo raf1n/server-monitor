@@ -30,6 +30,15 @@ export class NotificationsService {
     });
   }
 
+  async findOne(id: string): Promise<NotificationEntity | null> {
+    try {
+      const notification = await this.notificationRepo.findOneBy({ id });
+      return notification || null;
+    } catch {
+      return null;
+    }
+  }
+
   async create(data: {
     serverId?: string;
     type: string;

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, Cpu, HardDrive, MemoryStick } from 'lucide-react';
 import { AlertList } from '@/components/dashboard/alert-list';
 import { ChartCard } from '@/components/dashboard/chart-card';
@@ -11,18 +11,32 @@ import { ProcessTable } from '@/components/dashboard/process-table';
 import { Sidebar } from '@/components/dashboard/sidebar';
 import { StatCard, statusFromValue } from '@/components/dashboard/stat-card';
 import { Topbar } from '@/components/dashboard/topbar';
-import { AlertsPage } from '@/components/dashboard/pages/alerts-page';
-import { ProcessesPage } from '@/components/dashboard/pages/processes-page';
-import { ServersPage } from '@/components/dashboard/pages/servers-page';
-import { SettingsPage } from '@/components/dashboard/pages/settings-page';
+import { LoginPage } from '@/components/auth/login-page';
+import { useAuth } from '@/hooks/use-auth';
 import { useStats } from '@/hooks/use-stats';
+import { api } from '@/lib/api';
 import { useAlerts } from '@/hooks/use-alerts';
 import { useSettings } from '@/hooks/use-settings';
 import { DEMO_SERVERS } from '@/lib/mock-data';
 import type { TimeRange, ServerInfo, AlertEvent } from '@/lib/types';
 import { TIME_RANGE_POINTS } from '@/lib/types';
 
-const API_BASE = import.meta.env.VITE_SOCKET_URL || '';
+const AlertsPage = lazy(() => import('@/components/dashboard/pages/alerts-page').then(m => ({ default: m.AlertsPage })));
+const ProcessesPage = lazy(() => import('@/components/dashboard/pages/processes-page').then(m => ({ default: m.ProcessesPage })));
+const ServersPage = lazy(() => import('@/components/dashboard/pages/servers-page').then(m => ({ default: m.ServersPage })));
+const SettingsPage = lazy(() => import('@/components/dashboard/pages/settings-page').then(m => ({ default: m.SettingsPage })));
+const ProfilePage = lazy(() => import('@/components/dashboard/pages/profile-page').then(m => ({ default: m.ProfilePage })));
+const ApiKeysPage = lazy(() => import('@/components/dashboard/pages/api-keys-page').then(m => ({ default: m.ApiKeysPage })));
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center py-24">
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+    </div>
+  );
+}
+
+const API_HOST: string | undefined = import.meta.env.VITE_API_URL;
 
 function DashboardHome({
   stats,
@@ -116,7 +130,7 @@ function DashboardHome({
   );
 }
 
-export default function App() {
+function Dashboard({ username, email, role, onLogout }: { username?: string; email?: string | null; role?: string; onLogout?: () => void }) {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [servers, setServers] = useState<ServerInfo[]>([]);
   const [serverId, setServerId] = useState('');
@@ -131,38 +145,40 @@ export default function App() {
   const { settings } = useSettings();
 
   useEffect(() => {
-    if (!API_BASE) {
+    if (API_HOST === undefined) {
       setServers(DEMO_SERVERS);
       setServerId(DEMO_SERVERS[0]?.id ?? '');
       return;
     }
     const fetchServers = () => {
-      fetch(`${API_BASE}/servers`)
-        .then((res) => res.json())
-        .then((data: ServerInfo[]) => {
+      api.servers.list()
+        .then((data) => {
           setServers(data);
           setServerId((prev) => {
             if (prev && data.find((s) => s.id === prev)) return prev;
             return data[0]?.id ?? prev;
           });
         })
-        .catch(() => {});
+        .catch((err) => console.warn('Failed to fetch servers:', err));
     };
     fetchServers();
-    const interval = setInterval(fetchServers, 15_000);
-    return () => clearInterval(interval);
+    const onFocus = () => fetchServers();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
   }, []);
 
-  const { stats, connection, reconnect } = useStats(serverId, timeRange, {
+  const statsOptions = useMemo(() => ({
     refreshInterval: settings.refreshInterval,
     autoReconnect: settings.autoReconnect,
-  });
+  }), [settings.refreshInterval, settings.autoReconnect]);
+
+  const { stats, connection, reconnect } = useStats(serverId, timeRange, statsOptions);
   const loading = connection === 'connecting';
 
   const { alerts: apiAlerts, unacknowledgedCount: apiAlertCount, acknowledgeAlert: apiAckAlert, acknowledgeAll: apiAckAll } = useAlerts(
-    import.meta.env.VITE_SOCKET_URL ? serverId : undefined
+    API_HOST !== undefined ? serverId : undefined
   );
-  const hasApi = !!import.meta.env.VITE_SOCKET_URL;
+  const hasApi = API_HOST !== undefined;
   const alertSource = hasApi ? apiAlerts : (stats?.alerts ?? []);
   const totalAlertCount = hasApi
     ? apiAlertCount
@@ -205,7 +221,9 @@ export default function App() {
             osc.start();
             osc.stop(ctx.currentTime + 0.3);
           }
-        } catch {}
+        } catch (err) {
+          console.warn('Failed to play alert sound:', err);
+        }
       }
 
       if (settings.notifications && typeof Notification !== 'undefined') {
@@ -215,14 +233,16 @@ export default function App() {
             tag: alert.id,
           });
         } else if (Notification.permission === 'default') {
-          Notification.requestPermission().then((perm) => {
-            if (perm === 'granted') {
-              new Notification('Critical Alert', {
-                body: alert.message,
-                tag: alert.id,
-              });
-            }
-          });
+          Notification.requestPermission()
+            .then((perm) => {
+              if (perm === 'granted') {
+                new Notification('Critical Alert', {
+                  body: alert.message,
+                  tag: alert.id,
+                });
+              }
+            })
+            .catch((err) => console.warn('Notification permission request failed:', err));
         }
       }
     }
@@ -246,6 +266,10 @@ export default function App() {
           alerts={alertSource}
           onAcknowledgeAlert={hasApi ? apiAckAlert : (id) => {}}
           onAcknowledgeAll={hasApi ? apiAckAll : () => {}}
+          onLogout={onLogout}
+          username={username}
+          email={email}
+          onNavigate={handleNavigate}
         />
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
@@ -263,24 +287,54 @@ export default function App() {
               />
             )}
             {activeNav === 'servers' && (
-              <ServersPage
-                servers={servers}
-                selectedServerId={serverId}
-                onServerChange={setServerId}
-                showSensitiveData={settings.showSensitiveData}
-              />
+              <Suspense fallback={<PageLoader />}>
+                <ServersPage
+                  servers={servers}
+                  selectedServerId={serverId}
+                  onServerChange={setServerId}
+                  showSensitiveData={settings.showSensitiveData}
+                />
+              </Suspense>
             )}
             {activeNav === 'processes' && (
-              <ProcessesPage stats={stats} loading={loading} serverId={serverId} compactMode={settings.compactMode} />
+              <Suspense fallback={<PageLoader />}>
+                <ProcessesPage stats={stats} loading={loading} serverId={serverId} compactMode={settings.compactMode} />
+              </Suspense>
             )}
             {activeNav === 'alerts' && (
-              <AlertsPage stats={stats} loading={loading} serverId={serverId} />
+              <Suspense fallback={<PageLoader />}>
+                <AlertsPage stats={stats} loading={loading} serverId={serverId} />
+              </Suspense>
             )}
             {activeNav === 'settings' && (
-              <SettingsPage />
+              <Suspense fallback={<PageLoader />}>
+                <SettingsPage />
+              </Suspense>
+            )}
+            {activeNav === 'api-keys' && (
+              <Suspense fallback={<PageLoader />}>
+                <ApiKeysPage />
+              </Suspense>
+            )}
+            {activeNav === 'profile' && (
+              <Suspense fallback={<PageLoader />}>
+                <ProfilePage />
+              </Suspense>
             )}
           </div>
         </main>
       </div>
     </div>
-  );}
+  );
+}
+
+export default function App() {
+  const { isAuthenticated, login, logout, username, email, role } = useAuth();
+  const isLive = API_HOST !== undefined;
+
+  if (isLive && !isAuthenticated) {
+    return <LoginPage onLogin={login} />;
+  }
+
+  return <Dashboard username={username} email={email} role={role} onLogout={logout} />;
+}

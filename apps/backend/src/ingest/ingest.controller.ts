@@ -9,12 +9,16 @@ import {
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { Public } from '../auth/public.decorator';
 import { INGEST_QUEUE } from '../workers/workers.module';
+import { ApiKeysService } from '../api-keys/api-keys.service';
 
+@Public()
 @Controller('ingest')
 export class IngestController {
   constructor(
     @InjectQueue(INGEST_QUEUE) private readonly ingestQueue: Queue,
+    private readonly apiKeys: ApiKeysService,
   ) {}
 
   @Post()
@@ -23,15 +27,32 @@ export class IngestController {
     @Body() data: Record<string, unknown>,
     @Headers('x-api-key') apiKey: string,
   ) {
-    const expectedKey = process.env.AGENT_API_KEY;
-    if (expectedKey && apiKey !== expectedKey) {
-      throw new UnauthorizedException('Invalid API key');
+    if (!apiKey) {
+      throw new UnauthorizedException('Missing x-api-key header');
     }
 
-    await this.ingestQueue.add('metrics', data, {
-      removeOnComplete: { age: 3600 },
-    });
+    // Check master key first (env var)
+    const masterKey = process.env.AGENT_API_KEY;
+    if (masterKey && apiKey === masterKey) {
+      await this.ingestQueue.add('metrics', data, {
+        removeOnComplete: { age: 3600 },
+      });
+      return { accepted: true };
+    }
 
-    return { accepted: true };
+    // Check per-server API keys in database
+    const result = await this.apiKeys.validate(apiKey);
+    if (result.valid) {
+      // If key is scoped to a server, verify the data matches
+      if (result.serverId && data.serverId && data.serverId !== result.serverId) {
+        throw new UnauthorizedException('API key is not authorized for this server');
+      }
+      await this.ingestQueue.add('metrics', data, {
+        removeOnComplete: { age: 3600 },
+      });
+      return { accepted: true };
+    }
+
+    throw new UnauthorizedException('Invalid API key');
   }
 }
