@@ -43,8 +43,9 @@ export function useStats(serverId: string, timeRange: TimeRange = '5m', options?
   const fetchBackendHistory = useCallback(async () => {
     if (!API_BASE) return;
     try {
-      const limit = TIME_RANGE_POINTS[timeRangeRef.current];
-      const res = await fetch(`${API_BASE}/servers/${serverIdRef.current}/metrics?limit=${limit}`);
+      const range = timeRangeRef.current;
+      const limit = TIME_RANGE_POINTS[range];
+      const res = await fetch(`${API_BASE}/servers/${serverIdRef.current}/metrics?range=${range}&limit=${limit}`);
       if (!res.ok) return;
       const data: MetricPoint[] = await res.json();
       if (Array.isArray(data) && data.length > 0) {
@@ -60,7 +61,15 @@ export function useStats(serverId: string, timeRange: TimeRange = '5m', options?
     demoTimerRef.current = setInterval(() => {
       setStats((prev) => {
         if (!prev) return prev;
-        return nextDemoTick(prev);
+        const updated = nextDemoTick(prev);
+        const latestPoint = updated.history?.[updated.history.length - 1];
+        if (latestPoint) {
+          setChartHistory((prevCH) => {
+            const max = TIME_RANGE_POINTS[timeRangeRef.current];
+            return [...prevCH.slice(-(max - 1)), latestPoint];
+          });
+        }
+        return updated;
       });
     }, tick);
   }, []);

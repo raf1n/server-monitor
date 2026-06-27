@@ -4,11 +4,13 @@ import {
   Activity,
   AlertTriangle,
   ChevronLeft,
+  ChevronRight,
   Cpu,
   LayoutDashboard,
   Server,
   Settings,
   Workflow,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -33,41 +35,75 @@ interface SidebarProps {
   active: string;
   onNavigate: (id: string) => void;
   alertCount?: number;
+  mobileOpen?: boolean;
+  onMobileToggle?: () => void;
 }
 
-export function Sidebar({ active, onNavigate, alertCount = 0 }: SidebarProps) {
+export function Sidebar({ active, onNavigate, alertCount = 0, mobileOpen = false, onMobileToggle }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <aside
-      className={cn(
-        'flex h-screen flex-col border-r border-border bg-card transition-[width] duration-300 ease-in-out',
-        collapsed ? 'w-[68px]' : 'w-60'
+    <>
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={onMobileToggle}
+        />
       )}
-    >
-      <div className="flex h-16 items-center gap-3 border-b border-border px-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-          <Activity className="h-5 w-5" />
-        </div>
-        {!collapsed && (
-          <div className="flex flex-col leading-tight">
-            <span className="text-sm font-semibold text-foreground">Server Monitor</span>
-            <span className="text-[11px] text-muted-foreground">v2.4.1</span>
-          </div>
+
+      <aside
+        className={cn(
+          'flex h-screen flex-col border-r border-border bg-card transition-all duration-300 ease-in-out',
+          collapsed ? 'w-[68px]' : 'w-60',
+          // Mobile overlay
+          'fixed inset-y-0 left-0 z-50 -translate-x-full lg:static lg:z-auto lg:translate-x-0',
+          mobileOpen && 'translate-x-0'
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            'ml-auto h-8 w-8 text-muted-foreground hover:text-foreground',
-            collapsed && 'rotate-180'
+      >
+        <div className="flex h-16 items-center gap-2 border-b border-border px-3">
+          {!collapsed && (
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+              <Activity className="h-5 w-5" />
+            </div>
           )}
-          onClick={() => setCollapsed((c) => !c)}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-      </div>
+          {!collapsed && (
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-semibold text-foreground">Server Monitor</span>
+              <span className="text-[11px] text-muted-foreground">v2.4.1</span>
+            </div>
+          )}
+          <div className={cn('flex items-center gap-1', collapsed ? 'mx-auto' : 'ml-auto')}>
+            {onMobileToggle && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground lg:hidden"
+                onClick={onMobileToggle}
+                aria-label="Close sidebar"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                'h-8 w-8 text-muted-foreground hover:text-foreground',
+                collapsed && 'bg-accent text-foreground'
+              )}
+              onClick={() => setCollapsed((c) => !c)}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {collapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4">
         {NAV_ITEMS.map((item) => {
@@ -122,5 +158,6 @@ export function Sidebar({ active, onNavigate, alertCount = 0 }: SidebarProps) {
         </div>
       </div>
     </aside>
+    </>
   );
 }

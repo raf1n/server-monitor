@@ -79,6 +79,9 @@ export class NotificationsService {
       case 'webhook':
         await this.sendWebhook(notification);
         break;
+      case 'discord':
+        await this.sendDiscord(notification);
+        break;
       case 'telegram':
         await this.sendTelegram(notification);
         break;
@@ -123,6 +126,51 @@ export class NotificationsService {
 
       if (!response.ok) {
         throw new Error(`Webhook returned ${response.status}`);
+      }
+
+      await this.markSent(notification.id);
+    } catch (err) {
+      await this.markFailed(notification.id, (err as Error).message);
+    }
+  }
+
+  private async sendDiscord(notification: NotificationEntity): Promise<void> {
+    try {
+      const url = notification.destination || process.env.NOTIFICATION_DISCORD_WEBHOOK;
+      if (!url) {
+        this.logger.warn('Discord webhook not configured');
+        await this.markFailed(notification.id, 'Discord webhook not configured');
+        return;
+      }
+
+      const colors: Record<string, number> = {
+        critical: 0xe74c3c,
+        warning: 0xf39c12,
+        info: 0x5865f2,
+      };
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: 'Server Monitor',
+          embeds: [
+            {
+              title: `[${notification.severity.toUpperCase()}] ${notification.title}`,
+              description: notification.message,
+              color: colors[notification.severity] || 0x5865f2,
+              fields: [
+                { name: 'Server', value: notification.serverId || 'N/A', inline: true },
+                { name: 'Severity', value: notification.severity, inline: true },
+              ],
+              timestamp: notification.createdAt.toISOString(),
+            },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Discord webhook returned ${response.status}`);
       }
 
       await this.markSent(notification.id);
@@ -177,6 +225,9 @@ export class NotificationsService {
     }
     if (process.env.WEBHOOK_URL) {
       destinations.push({ type: 'webhook', destination: process.env.WEBHOOK_URL });
+    }
+    if (process.env.NOTIFICATION_DISCORD_WEBHOOK) {
+      destinations.push({ type: 'discord', destination: process.env.NOTIFICATION_DISCORD_WEBHOOK });
     }
     if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
       destinations.push({ type: 'telegram' });

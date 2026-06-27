@@ -5,6 +5,7 @@ import {
   ChevronDown,
   Clock,
   LogOut,
+  Menu,
   RefreshCw,
   Search,
   Settings,
@@ -45,6 +46,7 @@ interface TopbarProps {
   onTimeRangeChange: (range: TimeRange) => void;
   connection: ConnectionState;
   onReconnect: () => void;
+  onToggleSidebar?: () => void;
   alertCount: number;
   alerts?: AlertEvent[];
   onAcknowledgeAlert?: (id: string) => void;
@@ -91,6 +93,7 @@ export function Topbar({
   onTimeRangeChange,
   connection,
   onReconnect,
+  onToggleSidebar,
   alertCount,
   alerts = [],
   onAcknowledgeAlert,
@@ -109,6 +112,15 @@ export function Topbar({
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border bg-card/80 px-3 backdrop-blur-md md:gap-3 md:px-6">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground lg:hidden"
+        onClick={onToggleSidebar}
+        aria-label="Open sidebar"
+      >
+        <Menu className="h-5 w-5" />
+      </Button>
       <div className="flex min-w-0 items-center gap-2">
         <Select value={selectedServerId} onValueChange={onServerChange}>
           <SelectTrigger className="h-9 w-[140px] border-border bg-secondary/50 text-sm sm:w-[180px] md:w-[220px]">

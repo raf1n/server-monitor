@@ -121,6 +121,12 @@ export default function App() {
   const [servers, setServers] = useState<ServerInfo[]>([]);
   const [serverId, setServerId] = useState('');
   const [timeRange, setTimeRange] = useState<TimeRange>('5m');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  const handleNavigate = useCallback((id: string) => {
+    setActiveNav(id);
+    setMobileSidebarOpen(false);
+  }, []);
 
   const { settings } = useSettings();
 
@@ -224,10 +230,11 @@ export default function App() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar active={activeNav} onNavigate={setActiveNav} alertCount={totalAlertCount} />
+      <Sidebar active={activeNav} onNavigate={handleNavigate} alertCount={totalAlertCount} mobileOpen={mobileSidebarOpen} onMobileToggle={() => setMobileSidebarOpen(false)} />
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar
+          onToggleSidebar={() => setMobileSidebarOpen((p) => !p)}
           servers={servers}
           selectedServerId={serverId}
           onServerChange={setServerId}
