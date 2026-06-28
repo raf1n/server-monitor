@@ -14,7 +14,8 @@ API_KEY="${API_KEY:-}"
 INTERVAL_MS="${INTERVAL_MS:-5000}"
 UNINSTALL="${UNINSTALL:-false}"
 
-AGENT_BIN="/usr/local/bin/server-monitor-agent.js"
+AGENT_DIR="/opt/server-monitor-agent"
+AGENT_BIN="${AGENT_DIR}/agent.js"
 CONFIG_DIR="/etc/server-monitor"
 CONFIG_FILE="${CONFIG_DIR}/agent.env"
 SERVICE_FILE="/etc/systemd/system/server-monitor-agent.service"
@@ -96,15 +97,31 @@ fi
 
 info "Checking prerequisites..."
 
-if ! command -v node &>/dev/null; then
+NODE_CMD=""
+for cmd in \
+  "${NODE:-}" \
+  node nodejs \
+  /usr/local/bin/node /usr/bin/node \
+  /opt/homebrew/bin/node \
+  /home/linuxbrew/.linuxbrew/bin/node \
+  "$HOME/.nvm/versions/node/$(node --version 2>/dev/null)/bin/node" \
+  "$NVM_DIR/versions/node/$(node --version 2>/dev/null)/bin/node" \
+  /snap/node/*/bin/node; do
+  if command -v "$cmd" &>/dev/null; then
+    NODE_CMD="$(command -v "$cmd")"
+    break
+  fi
+done
+
+if [[ -z "${NODE_CMD}" ]]; then
   fatal "Node.js is not installed. Install Node.js >= 18 first: https://nodejs.org"
 fi
 
-NODE_MAJOR="$(node -e "console.log(process.versions.node.split('.')[0])")"
+NODE_MAJOR="$("${NODE_CMD}" -e "console.log(process.versions.node.split('.')[0])")"
 if [[ "${NODE_MAJOR}" -lt 18 ]]; then
-  fatal "Node.js >= 18 required, found $(node --version)"
+  fatal "Node.js >= 18 required, found $("${NODE_CMD}" --version)"
 fi
-ok "Node.js $(node --version)"
+ok "Node.js $("${NODE_CMD}" --version)"
 
 if [[ "${OS}" == "Linux" ]] && ! command -v systemctl &>/dev/null; then
   warn "systemctl not found — skipping service installation"
@@ -128,6 +145,7 @@ fi
 # ── download agent ────────────────────────────
 
 info "Downloading agent from ${AGENT_URL} ..."
+mkdir -p "${AGENT_DIR}"
 if command -v curl &>/dev/null; then
   curl -fsSL -o "${AGENT_BIN}" "${AGENT_URL}" || fatal "Download failed"
 elif command -v wget &>/dev/null; then
@@ -136,6 +154,9 @@ else
   fatal "Neither curl nor wget found. Install one of them first."
 fi
 chmod +x "${AGENT_BIN}"
+if id "${AGENT_USER}" &>/dev/null 2>&1; then
+  chown -R "${AGENT_USER}:${AGENT_USER}" "${AGENT_DIR}"
+fi
 ok "Agent saved to ${AGENT_BIN}"
 
 # ── create config ─────────────────────────────
@@ -172,6 +193,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=${AGENT_USER}
+WorkingDirectory=${AGENT_DIR}
 ExecStart=${NODE_CMD} ${AGENT_BIN}
 EnvironmentFile=${CONFIG_FILE}
 Restart=on-failure
