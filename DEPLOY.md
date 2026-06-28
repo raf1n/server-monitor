@@ -16,7 +16,7 @@ Nginx (port 443, SSL termination)
   └── /ingest, /health, /agent.js, /install.sh → proxy_pass http://localhost:3300
   │
   ▼
-Backend (Docker, port 3000)
+Backend (Docker, port 3300)
   ├── PostgreSQL (TimescaleDB) — internal
   └── Redis — internal
 ```
@@ -65,7 +65,7 @@ scp -r apps/frontend/dist/* user@your-vps:/var/www/server-monitor/
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-This starts 3 containers: **backend** (:3000), **postgres**, **redis**. No frontend container — nginx handles that.
+This starts 3 containers: **backend** (:3300), **postgres**, **redis**. No frontend container — nginx handles that.
 
 ## Step 5: Install and configure nginx
 

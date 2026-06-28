@@ -6,7 +6,7 @@ function parseArgs() {
   const args = process.argv.slice(2);
   const config = {
     serverId: process.env.SERVER_ID || "srv-prod-01",
-    apiUrl: process.env.API_URL || "http://localhost:3000",
+    apiUrl: process.env.API_URL || "http://localhost:3300",
     apiKey: process.env.API_KEY || "",
     interval: Number(process.env.INTERVAL_MS) || 2000,
   };
@@ -34,7 +34,7 @@ Usage:
 
 Options:
   --id, --server-id <id>       Unique server identifier (default: srv-prod-01)
-  --url, --api-url <url>       Backend API URL (default: http://localhost:3000)
+  --url, --api-url <url>       Backend API URL (default: http://localhost:3300)
   --key, --api-key <key>       API key for authentication
   --interval <ms>              Metrics collection interval (default: 2000)
   -h, --help                   Show this help
