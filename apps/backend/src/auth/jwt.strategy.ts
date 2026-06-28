@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { UserRole } from '../database/entities/user.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UserEntity, UserRole } from '../database/entities/user.entity';
 
 interface JwtPayload {
   sub: string;
@@ -11,7 +13,10 @@ interface JwtPayload {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor() {
+  constructor(
+    @InjectRepository(UserEntity)
+    private readonly userRepo: Repository<UserEntity>,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -20,6 +25,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload): Promise<{ userId: string; username: string; role: UserRole }> {
-    return { userId: payload.sub, username: payload.username, role: payload.role };
+    const user = await this.userRepo.findOne({ where: { id: payload.sub }, select: ['id', 'username', 'role'] });
+    if (!user) {
+      throw new UnauthorizedException('User no longer exists');
+    }
+    return { userId: user.id, username: user.username, role: user.role };
   }
 }

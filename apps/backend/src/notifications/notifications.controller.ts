@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, ParseUUIDPipe } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { ListNotificationsQuery } from '../dtos/notifications.dto';
 
@@ -17,7 +17,7 @@ export class NotificationsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.notifications.findOne(id);
   }
 }

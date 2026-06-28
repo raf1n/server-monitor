@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -58,10 +58,10 @@ export class UsersService {
 
     if (data.newPassword) {
       if (!data.currentPassword) {
-        throw new Error('Current password is required to set a new password');
+        throw new BadRequestException('Current password is required to set a new password');
       }
       const valid = await bcrypt.compare(data.currentPassword, user.password);
-      if (!valid) throw new Error('Current password is incorrect');
+      if (!valid) throw new BadRequestException('Current password is incorrect');
       user.password = await bcrypt.hash(data.newPassword, 10);
     }
 

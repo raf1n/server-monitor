@@ -18,5 +18,5 @@ COPY --from=builder /app/apps/backend/dist ./dist
 COPY --from=builder /app/packages/shared/dist ./node_modules/@server-monitor/shared/dist
 COPY --from=builder /app/apps/agent/dist ./agent-dist
 ENV AGENT_DIST_DIR=/app/agent-dist
-EXPOSE 3000
+EXPOSE 3300
 CMD ["node", "dist/main"]

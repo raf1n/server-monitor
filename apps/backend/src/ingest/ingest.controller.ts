@@ -6,6 +6,8 @@ import {
   HttpCode,
   HttpStatus,
   UnauthorizedException,
+  PayloadTooLargeException,
+  ValidationPipe,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -24,9 +26,13 @@ export class IngestController {
   @Post()
   @HttpCode(HttpStatus.ACCEPTED)
   async ingest(
-    @Body() data: Record<string, unknown>,
+    @Body(new ValidationPipe({ whitelist: false, transform: true })) data: Record<string, unknown>,
     @Headers('x-api-key') apiKey: string,
   ) {
+    const serialized = JSON.stringify(data);
+    if (serialized.length > 1024 * 100) {
+      throw new PayloadTooLargeException('Payload exceeds 100KB limit');
+    }
     if (!apiKey) {
       throw new UnauthorizedException('Missing x-api-key header');
     }

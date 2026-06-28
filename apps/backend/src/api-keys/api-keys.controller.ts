@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Delete, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Delete, Body, HttpCode, HttpStatus, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { ApiKeysService } from './api-keys.service';
@@ -22,14 +22,14 @@ export class ApiKeysController {
 
   @Post(':id/revoke')
   @HttpCode(HttpStatus.OK)
-  async revoke(@Param('id') id: string) {
+  async revoke(@Param('id', ParseUUIDPipe) id: string) {
     await this.apiKeys.revoke(id);
     return { revoked: true };
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  async delete(@Param('id') id: string) {
+  async delete(@Param('id', ParseUUIDPipe) id: string) {
     await this.apiKeys.delete(id);
     return { deleted: true };
   }

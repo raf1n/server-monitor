@@ -11,17 +11,23 @@ services:
       DB_HOST: postgres
       DB_PORT: 5432
       DB_USER: ${DB_USER:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       DB_NAME: ${DB_NAME:-server_monitor}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
-      AGENT_API_KEY: ${AGENT_API_KEY:-}
+      AGENT_API_KEY: ${AGENT_API_KEY:?AGENT_API_KEY is required}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
       METRICS_RETENTION_DAYS: ${METRICS_RETENTION_DAYS:-7}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
       ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-false}
+      NOTIFICATION_DISCORD_WEBHOOK: ${NOTIFICATION_DISCORD_WEBHOOK:-}
+      WEBHOOK_URL: ${WEBHOOK_URL:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      NOTIFICATION_EMAIL: ${NOTIFICATION_EMAIL:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -67,11 +73,12 @@ services:
 
   redis:
     image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
     volumes:
       - redisdata:/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5

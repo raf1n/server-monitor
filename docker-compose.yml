@@ -41,8 +41,8 @@ services:
       DB_NAME: server_monitor
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      JWT_SECRET: dev-secret-change-in-production
-      AGENT_API_KEY: dev-agent-key-123
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+      AGENT_API_KEY: ${AGENT_API_KEY:-dev-agent-key-123}
       CORS_ORIGIN: http://localhost:5173
       METRICS_RETENTION_DAYS: 7
       ADMIN_USERNAME: admin

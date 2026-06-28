@@ -43,6 +43,21 @@ if [ -z "$ADMIN_PASSWORD" ]; then
   exit 1
 fi
 
+if [ -z "${AGENT_API_KEY:-}" ]; then
+  AGENT_API_KEY=$(openssl rand -hex 32)
+  log "Generated AGENT_API_KEY: ${AGENT_API_KEY}"
+fi
+
+if [ -z "${REDIS_PASSWORD:-}" ]; then
+  REDIS_PASSWORD=$(openssl rand -hex 32)
+  log "Generated REDIS_PASSWORD: ${REDIS_PASSWORD}"
+fi
+
+if [ -z "${DB_PASSWORD:-}" ]; then
+  DB_PASSWORD=$(openssl rand -hex 32)
+  log "Generated DB_PASSWORD: ${DB_PASSWORD}"
+fi
+
 REPO_URL="${REPO_URL:-}"
 INSTALL_DIR="${INSTALL_DIR:-/opt/server-monitor}"
 FRONTEND_DIR="/var/www/server-monitor"
@@ -118,7 +133,7 @@ fi
 # 3. Generate .env
 # ─────────────────────────────────────────────
 
-if [ -f .env ] && grep -q "JWT_SECRET=" .env && [ -n "$(grep JWT_SECRET .env | cut -d= -f2)" ]; then
+if [ -f .env ] && grep -q "JWT_SECRET=" .env && [ -n "$(grep JWT_SECRET .env | cut -d= -f2)" ] && [ -n "$(grep DB_PASSWORD .env | cut -d= -f2)" ]; then
   warn ".env already exists with JWT_SECRET set — skipping generation"
   source .env 2>/dev/null || true
 else
@@ -128,6 +143,9 @@ else
   cat > .env <<EOF
 JWT_SECRET=${JWT_SECRET}
 ADMIN_PASSWORD=${ADMIN_PASSWORD}
+AGENT_API_KEY=${AGENT_API_KEY}
+REDIS_PASSWORD=${REDIS_PASSWORD}
+DB_PASSWORD=${DB_PASSWORD}
 CORS_ORIGIN=https://${DOMAIN}
 EOF
   log ".env created"
@@ -187,7 +205,7 @@ echo -e "${GREEN}╚════════════════════
 echo ""
 echo -e "  Dashboard:  ${CYAN}https://${DOMAIN}${NC}"
 echo -e "  Username:   ${CYAN}admin${NC}"
-echo -e "  Password:   ${CYAN}${ADMIN_PASSWORD}${NC}"
+echo -e "  Password:   ${YELLOW}(set above)${NC}"
 echo -e "  Backend:    ${CYAN}http://localhost:3300${NC}"
 echo ""
 echo -e "  ${YELLOW}Next steps:${NC}"

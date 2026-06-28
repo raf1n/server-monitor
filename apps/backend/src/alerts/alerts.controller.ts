@@ -1,7 +1,9 @@
-import { Controller, Get, Patch, Delete, Param, Query, Body, Logger, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Patch, Delete, Param, Query, Body, Logger, HttpCode, HttpStatus, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { AlertsService } from './alerts.service';
 import { AlertEntity } from '../database/entities/alert.entity';
 import { ListAlertsQuery, CountAlertsQuery, AcknowledgeAllAlertsQuery } from '../dtos/alerts.dto';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 
 @Controller('alerts')
 export class AlertsController {
@@ -31,12 +33,12 @@ export class AlertsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.alerts.findOne(id);
   }
 
   @Patch(':id/acknowledge')
-  async acknowledge(@Param('id') id: string) {
+  async acknowledge(@Param('id', ParseUUIDPipe) id: string) {
     const alert = await this.alerts.acknowledge(id);
     if (!alert) {
       return { success: false, message: 'Alert not found' };
@@ -45,14 +47,18 @@ export class AlertsController {
   }
 
   @Patch('acknowledge-all')
+  @Roles('admin')
+  @UseGuards(RolesGuard)
   async acknowledgeAll(@Query() query: AcknowledgeAllAlertsQuery) {
     const count = await this.alerts.acknowledgeAll(query.serverId);
     return { success: true, count };
   }
 
   @Delete(':id')
+  @Roles('admin')
+  @UseGuards(RolesGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id') id: string) {
+  async delete(@Param('id', ParseUUIDPipe) id: string) {
     await this.alerts.delete(id);
   }
 }

@@ -53,7 +53,7 @@ export class DatabaseModule {
 
   constructor() {
     this.logger.log(
-      `Db config: postgres://${process.env.DB_USER || "postgres"}@${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME || "server_monitor"} (synchronize: ${process.env.NODE_ENV !== "production"})`,
+      `Database configured (host: ${process.env.DB_HOST || "localhost"}, database: ${process.env.DB_NAME || "server_monitor"}, synchronize: ${process.env.NODE_ENV !== "production"})`,
     );
   }
 }

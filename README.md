@@ -178,8 +178,10 @@ server-monitor/
 | ------------------------ | -------- | ----------------------------------------------------------------- |
 | `JWT_SECRET`             | Yes      | Secret for signing JWT tokens (min 32 chars in production)        |
 | `ADMIN_PASSWORD`         | Yes      | Admin user password (username defaults to `admin`)                |
+| `AGENT_API_KEY`          | Yes      | Master API key — works for all agents                             |
+| `REDIS_PASSWORD`         | Yes      | Password for Redis authentication                                 |
+| `DB_PASSWORD`            | Yes      | Password for PostgreSQL                                           |
 | `CORS_ORIGIN`            | No       | Frontend origin for CORS (e.g. `https://monitor.example.com`)     |
-| `AGENT_API_KEY`          | No       | Master API key — works for all agents (per-server keys preferred) |
 | `ALLOW_REGISTRATION`     | No       | `true` to allow open user registration (default: `false`)         |
 | `METRICS_RETENTION_DAYS` | No       | Auto-drop snapshots older than N days (default: `7`)              |
 

@@ -11,6 +11,12 @@ import * as jwt from 'jsonwebtoken';
 import { REDIS_SUBSCRIBER } from '../redis/redis.module';
 import type Redis from 'ioredis';
 
+interface JwtPayload {
+  sub: string;
+  username: string;
+  role: string;
+}
+
 @WebSocketGateway({
   cors: { origin: process.env.CORS_ORIGIN || 'http://localhost:5173' },
   transports: ['websocket'],
@@ -57,7 +63,8 @@ export class StatsGateway implements OnGatewayConnection, OnGatewayDisconnect, O
       return;
     }
     try {
-      jwt.verify(token, process.env.JWT_SECRET!);
+      const payload = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+      client.data.user = { userId: payload.sub, username: payload.username, role: payload.role };
     } catch {
       this.logger.warn(`Client ${client.id} disconnected — invalid token`);
       client.disconnect();
@@ -74,6 +81,10 @@ export class StatsGateway implements OnGatewayConnection, OnGatewayDisconnect, O
   handleSubscribe(client: Socket, payload: { serverId: string }) {
     const { serverId } = payload;
     if (!serverId) return;
+    if (client.data.user?.role !== 'admin') {
+      this.logger.warn(`${client.id} (${client.data.user?.role}) tried to subscribe to ${serverId} — denied`);
+      return;
+    }
 
     client.join(`server:${serverId}`);
     this.logger.log(`${client.id} subscribed to ${serverId}`);

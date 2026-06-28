@@ -1,6 +1,3 @@
-import { IsObject } from 'class-validator';
-
 export class IngestDataDto {
-  @IsObject()
-  data!: Record<string, unknown>;
+  [key: string]: unknown;
 }

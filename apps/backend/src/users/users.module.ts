@@ -25,7 +25,11 @@ export class UsersModule implements OnModuleInit {
     const count = await this.userRepo.count();
     if (count === 0) {
       const username = process.env.ADMIN_USERNAME || 'admin';
-      const password = process.env.ADMIN_PASSWORD || 'admin';
+      const password = process.env.ADMIN_PASSWORD;
+      if (!password) {
+        this.logger.error('ADMIN_PASSWORD environment variable is required when no users exist.');
+        throw new Error('ADMIN_PASSWORD is required');
+      }
       const hash = await bcrypt.hash(password, 10);
       await this.userRepo.save({ username, password: hash, role: 'admin' });
       this.logger.log(`Default admin user created: ${username}`);

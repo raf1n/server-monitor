@@ -35,5 +35,11 @@ import { ApiKeysModule } from './api-keys/api-keys.module';
     NotificationsModule,
     SettingsModule,
   ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

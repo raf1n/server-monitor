@@ -109,8 +109,8 @@ export class DatabaseInitService implements OnModuleInit {
       }
 
       await this.dataSource.query(
-        `SELECT add_retention_policy($1, INTERVAL '${retentionDays} days', if_not_exists => TRUE)`,
-        [table],
+        `SELECT add_retention_policy($1, make_interval(days => $2), if_not_exists => TRUE)`,
+        [table, retentionDays],
       );
     }
 
