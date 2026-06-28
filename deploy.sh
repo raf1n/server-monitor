@@ -158,6 +158,9 @@ fi
 info "Installing dependencies..."
 pnpm install --frozen-lockfile 2>/dev/null || pnpm install
 
+info "Building shared package..."
+pnpm build:shared
+
 info "Building frontend (same-origin mode)..."
 VITE_API_URL= VITE_SOCKET_URL= pnpm build:frontend
 
