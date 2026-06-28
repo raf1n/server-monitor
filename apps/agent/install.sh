@@ -107,7 +107,7 @@ done
 
 # Check common NVM locations (avoid node --version which fails under sudo)
 if [[ -z "${NODE_CMD}" ]]; then
-  for dir in "$HOME/.nvm/versions/node" "$NVM_DIR/versions/node" /root/.nvm/versions/node; do
+  for dir in "$HOME/.nvm/versions/node" "${NVM_DIR:-}/versions/node" /root/.nvm/versions/node; do
     if [[ -d "$dir" ]]; then
       candidate="$(ls -t "$dir" 2>/dev/null | head -1)"
       if [[ -n "$candidate" && -x "$dir/$candidate/bin/node" ]]; then
@@ -120,8 +120,8 @@ fi
 
 # Under sudo, PATH is often restricted — try the original user's PATH
 if [[ -z "${NODE_CMD}" && -n "${SUDO_USER:-}" ]]; then
-  ORIG_PATH="$(sudo -u "$SUDO_USER" bash -c 'echo "$PATH"' 2>/dev/null)"
-  NODE_CMD="$(PATH="$ORIG_PATH" command -v node 2>/dev/null || true)"
+  ORIG_PATH="$(sudo -u "$SUDO_USER" bash -c 'echo "$PATH"' 2>/dev/null || true)"
+  NODE_CMD="$(PATH="${ORIG_PATH:-}" command -v node 2>/dev/null || true)"
 fi
 
 if [[ -z "${NODE_CMD}" ]]; then
