@@ -6,6 +6,7 @@ import { AlertEntity } from "./entities/alert.entity";
 import { NotificationEntity } from "./entities/notification.entity";
 import { SettingsEntity } from "./entities/settings.entity";
 import { UserEntity } from "./entities/user.entity";
+import { ApiKeyEntity } from "./entities/api-key.entity";
 import { DatabaseInitService } from "./database-init.service";
 
 @Global()
@@ -25,6 +26,7 @@ import { DatabaseInitService } from "./database-init.service";
         NotificationEntity,
         SettingsEntity,
         UserEntity,
+        ApiKeyEntity,
       ],
       synchronize:
         process.env.DB_SYNCHRONIZE === "true" ||
@@ -45,6 +47,7 @@ import { DatabaseInitService } from "./database-init.service";
       NotificationEntity,
       SettingsEntity,
       UserEntity,
+      ApiKeyEntity,
     ]),
   ],
   providers: [DatabaseInitService],
