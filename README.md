@@ -160,6 +160,15 @@ server-monitor/
 | `pnpm build`        | Build all packages                       |
 | `pnpm typecheck`    | TypeScript check all packages            |
 | `pnpm lint`         | Lint all packages                        |
+| `pnpm docker:up`    | Start dev containers (PostgreSQL, Redis, backend, frontend) |
+| `pnpm docker:down`  | Stop dev containers (`-- -v` to wipe volumes) |
+| `pnpm docker:rebuild` | Rebuild and restart dev containers    |
+| `pnpm docker:logs`  | Tail dev container logs                  |
+| `pnpm docker:prod:up` | Start prod containers (backend + DBs)  |
+| `pnpm docker:prod:down` | Stop prod containers (`-- -v` to wipe volumes) |
+| `pnpm docker:prod:rebuild` | Build frontend, rebuild and restart prod backend |
+| `pnpm docker:prod:logs` | Tail prod container logs             |
+| `pnpm deploy`       | Full deploy (deploy.sh)                  |
 
 ## Configuration
 

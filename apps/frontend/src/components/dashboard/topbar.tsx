@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Bell,
   Check,
@@ -32,7 +32,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TIME_RANGE_LABELS, TIME_RANGE_SHORT } from "@/lib/types";
-import type { ServerInfo, ServerStatus, TimeRange, AlertEvent } from "@/lib/types";
+import type {
+  ServerInfo,
+  ServerStatus,
+  TimeRange,
+  AlertEvent,
+} from "@/lib/types";
 import type { ConnectionState } from "@/hooks/use-stats";
 import { api } from "@/lib/api";
 
@@ -82,7 +87,7 @@ const CONNECTION_META: Record<ConnectionState, { label: string; dot: string }> =
 function formatRelative(ts: number): string {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
+  if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours}h ago`;
@@ -118,7 +123,9 @@ export function Topbar({
 
   const hasApi = API_HOST !== undefined;
   const unacked = alerts.filter((a) => !a.acknowledged);
-  const recent = [...unacked].sort((a, b) => b.timestamp - a.timestamp).slice(0, 5);
+  const recent = [...unacked]
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 5);
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border bg-card/80 px-3 backdrop-blur-md md:gap-3 md:px-6">
@@ -248,8 +255,11 @@ export function Topbar({
                   <span
                     className={cn(
                       "mt-1 h-2 w-2 shrink-0 rounded-full",
-                      alert.severity === 'critical' ? 'bg-destructive' :
-                      alert.severity === 'warning' ? 'bg-warning' : 'bg-primary'
+                      alert.severity === "critical"
+                        ? "bg-destructive"
+                        : alert.severity === "warning"
+                          ? "bg-warning"
+                          : "bg-primary",
                     )}
                   />
                   <div className="flex flex-col">
@@ -280,7 +290,7 @@ export function Topbar({
             <button className="flex items-center gap-2 rounded-md border border-border bg-secondary/50 px-1.5 py-1 transition-colors hover:bg-accent">
               <Avatar className="h-7 w-7">
                 <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">
-                  {(username || 'U').charAt(0).toUpperCase()}
+                  {(username || "U").charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
@@ -290,21 +300,26 @@ export function Topbar({
             <DropdownMenuLabel>
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{username || 'User'}</span>
-                  <Badge variant={role === 'admin' ? 'default' : 'secondary'} className="text-[10px] capitalize">
-                    {role || 'viewer'}
+                  <span className="text-sm font-medium">
+                    {username || "User"}
+                  </span>
+                  <Badge
+                    variant={role === "admin" ? "default" : "secondary"}
+                    className="text-[10px] capitalize"
+                  >
+                    {role || "viewer"}
                   </Badge>
                 </div>
                 <span className="text-xs text-muted-foreground">
-                  {email || ''}
+                  {email || ""}
                 </span>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onNavigate?.('profile')}>
+            <DropdownMenuItem onClick={() => onNavigate?.("profile")}>
               <User className="mr-2 h-4 w-4" /> Profile
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onNavigate?.('settings')}>
+            <DropdownMenuItem onClick={() => onNavigate?.("settings")}>
               <Settings className="mr-2 h-4 w-4" /> Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />

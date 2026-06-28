@@ -62,10 +62,16 @@ scp -r apps/frontend/dist/* user@your-vps:/var/www/server-monitor-frontend/
 ## Step 4: Start backend + databases on VPS
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d
+pnpm docker:prod:up
 ```
 
-This starts 3 containers: **backend** (:3300), **postgres**, **redis**. No frontend container — nginx handles that.
+Or if you also want to rebuild:
+
+```bash
+pnpm docker:prod:rebuild
+```
+
+This starts **backend** (:3300), **postgres**, **redis**. No frontend container — nginx handles that.
 
 ## Step 5: Install and configure nginx
 
@@ -119,6 +125,8 @@ server {
         proxy_pass http://localhost:3300;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
     # WebSocket
@@ -200,7 +208,18 @@ AGENT_API_KEY=$(openssl rand -hex 32)
 
 Agents using the master key and agents using per-server keys can coexist. The ingest endpoint checks the master key first, then falls back to per-server keys in the database.
 
-## Redeploying frontend after changes
+## Redeploying
+
+### Option A: Full redeploy (recommended — runs on VPS)
+
+```bash
+cd /opt/server-monitor
+pnpm docker:prod:rebuild
+```
+
+Builds the frontend (same-origin mode), rebuilds the backend, and restarts all containers. Requires Node.js/pnpm on the VPS.
+
+### Option B: Frontend-only update (no backend changes)
 
 ```bash
 # On your dev machine
