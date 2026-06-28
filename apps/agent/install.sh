@@ -116,7 +116,9 @@ fi
 # ── validate required params ──────────────────
 
 if [[ -z "${AGENT_URL}" ]]; then
-  [[ -z "${API_URL}" ]] && fatal "--agent-url or --api-url is required"
+  if [[ -z "${API_URL}" ]]; then
+    API_URL="__BACKEND_URL__"
+  fi
   AGENT_URL="${API_URL}/agent.js"
 fi
 

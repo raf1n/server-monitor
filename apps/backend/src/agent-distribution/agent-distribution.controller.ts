@@ -1,11 +1,12 @@
 import {
   Controller,
   Get,
+  Req,
   Res,
   Header,
   Logger,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { Public } from '../auth/public.decorator';
@@ -36,9 +37,13 @@ export class AgentDistributionController {
 
   @Get('install.sh')
   @Header('Content-Type', 'text/x-shellscript; charset=utf-8')
-  async getInstallSh(@Res() res: Response) {
+  async getInstallSh(@Req() req: Request, @Res() res: Response) {
     try {
-      const file = await readFile(join(this.agentDistDir, 'install.sh'), 'utf-8');
+      let file = await readFile(join(this.agentDistDir, 'install.sh'), 'utf-8');
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+      const host = req.headers['x-forwarded-host'] || req.headers.host;
+      const baseUrl = `${protocol}://${host}`;
+      file = file.replace(/__BACKEND_URL__/g, baseUrl);
       res.send(file);
     } catch {
       this.logger.error('Failed to read install.sh');
