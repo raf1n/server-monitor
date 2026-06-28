@@ -6,7 +6,6 @@ import { AlertEntity } from "./entities/alert.entity";
 import { NotificationEntity } from "./entities/notification.entity";
 import { SettingsEntity } from "./entities/settings.entity";
 import { UserEntity } from "./entities/user.entity";
-import { ApiKeyEntity } from "./entities/api-key.entity";
 import { DatabaseInitService } from "./database-init.service";
 
 @Global()
@@ -27,7 +26,10 @@ import { DatabaseInitService } from "./database-init.service";
         SettingsEntity,
         UserEntity,
       ],
-      synchronize: process.env.NODE_ENV !== "production",
+      synchronize:
+        process.env.DB_SYNCHRONIZE === "true" ||
+        (process.env.NODE_ENV !== "production" &&
+          process.env.DB_SYNCHRONIZE !== "false"),
       retryAttempts: 5,
       retryDelay: 3000,
       extra: {
@@ -53,7 +55,7 @@ export class DatabaseModule {
 
   constructor() {
     this.logger.log(
-      `Database configured (host: ${process.env.DB_HOST || "localhost"}, database: ${process.env.DB_NAME || "server_monitor"}, synchronize: ${process.env.NODE_ENV !== "production"})`,
+      `Database configured (host: ${process.env.DB_HOST || "localhost"}, database: ${process.env.DB_NAME || "server_monitor"}, synchronize: ${process.env.DB_SYNCHRONIZE === "true" || (process.env.NODE_ENV !== "production" && process.env.DB_SYNCHRONIZE !== "false")})`,
     );
   }
 }
