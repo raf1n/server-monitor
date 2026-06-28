@@ -23,6 +23,9 @@ function formatAxisTime(ts: number, timeRange: TimeRange): string {
   if (timeRange === '24h') {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
   }
+  if (timeRange === '5m') {
+    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  }
   return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
@@ -103,6 +106,7 @@ export function TimeSeriesChart({ data, dataKey, color, unit = '%', height = 220
           tickLine={false}
           axisLine={false}
           minTickGap={40}
+          tickCount={timeRange === '5m' ? 6 : timeRange === '1h' ? 8 : 8}
         />
         <YAxis
           stroke={AXIS_COLOR}
@@ -147,6 +151,7 @@ export function NetworkChart({ data, height = 220, timeRange, animate = false }:
           tickLine={false}
           axisLine={false}
           minTickGap={40}
+          tickCount={timeRange === '5m' ? 6 : timeRange === '1h' ? 8 : 8}
         />
         <YAxis
           stroke={AXIS_COLOR}

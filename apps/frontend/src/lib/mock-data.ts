@@ -5,14 +5,17 @@ import type {
   MetricPoint,
   AlertEvent,
   ProcessStatus,
+  TimeRange,
 } from './types';
 
+import { TIME_RANGE_POINTS } from './types';
+
 export const DEMO_SERVERS: ServerInfo[] = [
-  { id: 'srv-prod-01', name: 'prod-web-01', host: '10.0.1.24', region: 'us-east-1', status: 'online' },
-  { id: 'srv-prod-02', name: 'prod-api-02', host: '10.0.1.25', region: 'us-east-1', status: 'online' },
-  { id: 'srv-stage-01', name: 'stage-worker-01', host: '10.0.2.10', region: 'us-west-2', status: 'degraded' },
-  { id: 'srv-db-01', name: 'db-primary-01', host: '10.0.3.5', region: 'us-east-1', status: 'online' },
-  { id: 'srv-edge-01', name: 'edge-cdn-01', host: '10.0.4.2', region: 'eu-west-1', status: 'offline' },
+  { id: 'srv-prod-01', name: 'prod-web-01', host: '10.0.1.24', region: 'us-east-1', status: 'online', agentIntervalMs: 2000, agentVersion: '0.1.0' },
+  { id: 'srv-prod-02', name: 'prod-api-02', host: '10.0.1.25', region: 'us-east-1', status: 'online', agentIntervalMs: 2000, agentVersion: '0.1.0' },
+  { id: 'srv-stage-01', name: 'stage-worker-01', host: '10.0.2.10', region: 'us-west-2', status: 'degraded', agentIntervalMs: 2000, agentVersion: '0.1.0' },
+  { id: 'srv-db-01', name: 'db-primary-01', host: '10.0.3.5', region: 'us-east-1', status: 'online', agentIntervalMs: 2000, agentVersion: '0.1.0' },
+  { id: 'srv-edge-01', name: 'edge-cdn-01', host: '10.0.4.2', region: 'eu-west-1', status: 'offline', agentIntervalMs: 2000, agentVersion: '0.1.0' },
 ];
 
 const PM2_NAMES = [
@@ -119,8 +122,16 @@ function makeDemoAlerts(serverName: string): AlertEvent[] {
   }));
 }
 
-export function generateDemoStats(server: ServerInfo, points = 30): ServerStats {
+const RANGE_MS: Record<TimeRange, number> = {
+  '5m': 300_000,
+  '1h': 3_600_000,
+  '24h': 86_400_000,
+};
+
+export function generateDemoStats(server: ServerInfo, timeRange: TimeRange = '5m'): ServerStats {
   const now = Date.now();
+  const intervalMs = server.agentIntervalMs ?? Math.round(RANGE_MS[timeRange] / TIME_RANGE_POINTS[timeRange]);
+  const points = Math.min(Math.floor(RANGE_MS[timeRange] / intervalMs), 96);
   let cpu = 30 + Math.random() * 25;
   let memory = 45 + Math.random() * 20;
   let disk = 55 + Math.random() * 15;
@@ -134,7 +145,7 @@ export function generateDemoStats(server: ServerInfo, points = 30): ServerStats 
     netIn = randomWalk(netIn, 60, 50, 1200);
     netOut = randomWalk(netOut, 50, 30, 1000);
     return {
-      timestamp: now - (points - i) * 2000,
+      timestamp: now - (points - i) * intervalMs,
       cpu: Math.round(cpu * 10) / 10,
       memory: Math.round(memory * 10) / 10,
       disk: Math.round(disk * 10) / 10,
@@ -150,6 +161,8 @@ export function generateDemoStats(server: ServerInfo, points = 30): ServerStats 
 
   return {
     serverId: server.id,
+    intervalMs,
+    version: server.agentVersion,
     timestamp: now,
     host: server.host,
     name: server.name,

@@ -3,26 +3,17 @@ import type { ProcessInfo, ServerInfo } from "./types";
 const API_HOST: string | undefined = import.meta.env.VITE_API_URL;
 const API_PREFIX = '/api';
 
-function getToken(): string | null {
-  try {
-    return localStorage.getItem("auth_token");
-  } catch {
-    return null;
-  }
-}
-
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options?.headers as Record<string, string>),
   };
-  const token = getToken();
-  if (token) headers["Authorization"] = `Bearer ${token}`;
   const url = `${API_HOST ?? ''}${API_PREFIX}${path}`;
-  const res = await fetch(url, { ...options, headers });
+  const res = await fetch(url, { ...options, headers, credentials: 'include' });
   if (res.status === 401) {
-    localStorage.removeItem("auth_token");
-    window.location.reload();
+    const { useStore } = await import('@/store');
+    useStore.getState().logout();
+    window.location.href = '/login';
     throw new Error("Unauthorized");
   }
   if (!res.ok) {

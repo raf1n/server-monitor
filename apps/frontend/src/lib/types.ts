@@ -24,6 +24,8 @@ export const TIME_RANGE_POINTS: Record<TimeRange, number> = {
   '24h': 96,
 };
 
+export const HISTORY_BUFFER = 5000;
+
 export const TIME_RANGE_SHORT: Record<TimeRange, string> = {
   '5m': '5 min',
   '1h': '1 hr',

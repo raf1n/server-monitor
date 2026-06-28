@@ -10,6 +10,8 @@ interface DynamicServer {
   region: string;
   status: 'online' | 'degraded' | 'offline';
   lastSeen: number;
+  intervalMs?: number;
+  agentVersion?: string;
 }
 
 @Injectable()
@@ -41,7 +43,7 @@ export class ServersService implements OnModuleDestroy {
     clearInterval(this.staleInterval);
   }
 
-  async register(id: string, host?: string, name?: string) {
+  async register(id: string, host?: string, name?: string, intervalMs?: number, agentVersion?: string) {
     this.memory.set(id, {
       id,
       name: name || id,
@@ -49,6 +51,8 @@ export class ServersService implements OnModuleDestroy {
       region: 'dynamic',
       status: 'online',
       lastSeen: Date.now(),
+      intervalMs,
+      agentVersion,
     });
 
     if (!this.dbOk) return;
@@ -61,6 +65,8 @@ export class ServersService implements OnModuleDestroy {
           name: name || existing.name,
           status: 'online',
           lastSeen: new Date(),
+          intervalMs: intervalMs ?? existing.intervalMs,
+          agentVersion: agentVersion ?? existing.agentVersion,
         });
       } else {
         await this.serverRepo.insert({
@@ -69,6 +75,8 @@ export class ServersService implements OnModuleDestroy {
           host: host || 'unknown',
           region: 'dynamic',
           status: 'online',
+          intervalMs,
+          agentVersion,
           lastSeen: new Date(),
         });
       }
@@ -76,6 +84,11 @@ export class ServersService implements OnModuleDestroy {
       this.dbOk = false;
       this.logger.warn('DB unavailable — using in-memory storage');
     }
+  }
+
+  async getById(id: string) {
+    const all = await this.getAll();
+    return all.find((s) => s.id === id) || null;
   }
 
   async getAll() {
@@ -89,12 +102,14 @@ export class ServersService implements OnModuleDestroy {
     }
 
     const now = Date.now();
-    const merged = new Map<string, { id: string; name: string; host: string; region: string; status: 'online' | 'offline' | 'degraded' }>();
+    const merged = new Map<string, { id: string; name: string; host: string; region: string; status: 'online' | 'offline' | 'degraded'; agentIntervalMs?: number; agentVersion?: string }>();
     for (const s of this.staticServers) {
       const dyn = this.memory.get(s.id);
       merged.set(s.id, {
         ...s,
         status: dyn ? (now - dyn.lastSeen > 30_000 ? 'offline' : dyn.status) : 'offline' as const,
+        agentIntervalMs: dyn?.intervalMs,
+        agentVersion: dyn?.agentVersion,
       });
     }
     for (const s of this.memory.values()) {
@@ -102,6 +117,8 @@ export class ServersService implements OnModuleDestroy {
         merged.set(s.id, {
           id: s.id, name: s.name, host: s.host, region: s.region,
           status: (now - s.lastSeen > 30_000 ? 'offline' : s.status) as 'online' | 'offline' | 'degraded',
+          agentIntervalMs: s.intervalMs,
+          agentVersion: s.agentVersion,
         });
       }
     }

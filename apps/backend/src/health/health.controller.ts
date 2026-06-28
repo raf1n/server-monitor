@@ -6,6 +6,7 @@ import { REDIS_PUBLISHER } from "../redis/redis.module";
 import { Public } from "../auth/public.decorator";
 import type Redis from "ioredis";
 import { MetricSnapshotEntity } from "../database/entities/metric-snapshot.entity";
+import * as buildInfo from "../../build-info.json";
 
 @Public()
 @Controller("health")
@@ -17,6 +18,11 @@ export class HealthController {
     private readonly metricRepo?: Repository<MetricSnapshotEntity>,
     @Inject(REDIS_PUBLISHER) private readonly redis?: Redis,
   ) {}
+
+  @Get('version')
+  version() {
+    return buildInfo;
+  }
 
   @Get()
   async check() {

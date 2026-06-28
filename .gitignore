@@ -13,4 +13,5 @@ yarn-error.log*
 .pnp.js
 coverage/
 
+build-info.json
 .commandcode

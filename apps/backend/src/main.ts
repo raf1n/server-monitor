@@ -1,6 +1,7 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { ValidationPipe, Logger, RequestMethod } from '@nestjs/common';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
@@ -22,6 +23,7 @@ async function bootstrap() {
   }
 
   app.use(helmet());
+  app.use(cookieParser());
 
   app.setGlobalPrefix('api', {
     exclude: [

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { NavLink } from "react-router-dom";
+import { useUnacknowledgedCount } from "@/store";
 import {
   Activity,
   AlertTriangle,
@@ -18,38 +20,29 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 interface NavItem {
-  id: string;
+  to: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  badge?: number;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'servers', label: 'Servers', icon: Server },
-  { id: 'processes', label: 'Processes', icon: Workflow },
-  { id: 'alerts', label: 'Alerts', icon: AlertTriangle },
-  { id: 'api-keys', label: 'API Keys', icon: Key },
-  { id: 'settings', label: 'Settings', icon: Settings },
-  { id: 'profile', label: 'Profile', icon: User },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/servers", label: "Servers", icon: Server },
+  { to: "/processes", label: "Processes", icon: Workflow },
+  { to: "/alerts", label: "Alerts", icon: AlertTriangle },
+  { to: "/api-keys", label: "API Keys", icon: Key },
+  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/profile", label: "Profile", icon: User },
 ];
 
 interface SidebarProps {
-  active: string;
-  onNavigate: (id: string) => void;
-  alertCount?: number;
   mobileOpen?: boolean;
   onMobileToggle?: () => void;
 }
 
-export function Sidebar({
-  active,
-  onNavigate,
-  alertCount = 0,
-  mobileOpen = false,
-  onMobileToggle,
-}: SidebarProps) {
+export function Sidebar({ mobileOpen = false, onMobileToggle }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const alertCount = useUnacknowledgedCount();
 
   return (
     <>
@@ -81,7 +74,9 @@ export function Sidebar({
               <span className="text-sm font-semibold text-foreground">
                 Server Monitor
               </span>
-              <span className="text-[11px] text-muted-foreground">v1.0.0</span>
+              <span className="text-[11px] text-muted-foreground">
+                {__APP_VERSION__}
+              </span>
             </div>
           )}
           <div
@@ -124,20 +119,21 @@ export function Sidebar({
         <nav className="flex-1 space-y-1 px-3 py-4">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
-            const isActive = active === item.id;
-            const badge = item.id === "alerts" ? alertCount : item.badge;
+            const badge = item.to === "/alerts" ? alertCount : undefined;
             return (
-              <button
-                key={item.id}
-                onClick={() => onNavigate(item.id)}
-                aria-current={isActive ? 'page' : undefined}
-                className={cn(
-                  "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
-                  collapsed && "justify-center",
-                )}
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={onMobileToggle}
+                className={({ isActive }) =>
+                  cn(
+                    "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                    collapsed && "justify-center",
+                  )
+                }
                 title={collapsed ? item.label : undefined}
               >
                 <Icon className="h-[18px] w-[18px] shrink-0" />
@@ -152,7 +148,7 @@ export function Sidebar({
                 {collapsed && badge ? (
                   <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive" />
                 ) : null}
-              </button>
+              </NavLink>
             );
           })}
         </nav>
@@ -170,9 +166,6 @@ export function Sidebar({
             </div>
             {!collapsed && (
               <div className="flex flex-col leading-tight">
-                {/* <span className="text-xs font-medium text-foreground">
-                  Agent v3.2
-                </span> */}
                 <span className="text-[11px] text-muted-foreground">
                   Reporting active
                 </span>

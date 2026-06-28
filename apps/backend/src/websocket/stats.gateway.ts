@@ -18,7 +18,7 @@ interface JwtPayload {
 }
 
 @WebSocketGateway({
-  cors: { origin: process.env.CORS_ORIGIN || 'http://localhost:5173' },
+  cors: { origin: process.env.CORS_ORIGIN || 'http://localhost:5173', credentials: true },
   transports: ['websocket'],
 })
 export class StatsGateway implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit {
@@ -56,7 +56,20 @@ export class StatsGateway implements OnGatewayConnection, OnGatewayDisconnect, O
   }
 
   handleConnection(client: Socket) {
-    const token = client.handshake.auth?.token;
+    // Extract JWT from cookie header (httpOnly cookie) or auth handshake (fallback)
+    let token: string | undefined;
+
+    const cookieHeader = client.handshake.headers.cookie;
+    if (cookieHeader) {
+      const match = cookieHeader.match(/(?:^|;\s*)token=([^;]*)/);
+      if (match) token = decodeURIComponent(match[1]);
+    }
+
+    // Fallback: auth handshake (for non-browser clients during migration)
+    if (!token) {
+      token = client.handshake.auth?.token;
+    }
+
     if (!token) {
       this.logger.warn(`Client ${client.id} disconnected — no token`);
       client.disconnect();

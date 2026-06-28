@@ -8,7 +8,7 @@ function parseArgs() {
     serverId: process.env.SERVER_ID || "srv-prod-01",
     apiUrl: process.env.API_URL || "http://localhost:3300",
     apiKey: process.env.API_KEY || "",
-    interval: Number(process.env.INTERVAL_MS) || 2000,
+    interval: Number(process.env.INTERVAL_MS) || 60000,
   };
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -36,7 +36,7 @@ Options:
   --id, --server-id <id>       Unique server identifier (default: srv-prod-01)
   --url, --api-url <url>       Backend API URL (default: http://localhost:3300)
   --key, --api-key <key>       API key for authentication
-  --interval <ms>              Metrics collection interval (default: 2000)
+  --interval <ms>              Metrics collection interval (default: 60000)
   -h, --help                   Show this help
 
 Environment variables (fallback):
@@ -51,16 +51,19 @@ Environment variables (fallback):
 const { serverId, apiUrl, apiKey, interval } = parseArgs();
 
 if (!apiKey) {
-  console.error('Error: API key is required. Set --key flag or API_KEY env var.');
+  console.error(
+    "Error: API key is required. Set --key flag or API_KEY env var.",
+  );
   process.exit(1);
 }
 
-const collector = new Collector();
+const collector = new Collector(interval);
 const sender = new Sender(apiUrl, apiKey);
 
 async function tick() {
   try {
     const stats = await collector.collect(serverId);
+
     await sender.send(stats);
   } catch (err) {
     console.error(

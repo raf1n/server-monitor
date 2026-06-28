@@ -23,6 +23,12 @@ export class ServerEntity {
   @Column({ default: "online" })
   status!: string;
 
+  @Column({ type: "int", nullable: true })
+  intervalMs?: number;
+
+  @Column({ nullable: true })
+  agentVersion?: string;
+
   @Column({ type: "timestamptz", nullable: true })
   lastSeen!: Date;
 

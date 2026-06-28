@@ -10,6 +10,8 @@ export interface ServerInfo {
   host: string;
   region: string;
   status: ServerStatus;
+  agentIntervalMs?: number;
+  agentVersion?: string;
 }
 
 export interface ProcessInfo {
@@ -55,6 +57,8 @@ export interface ServerStats {
   serverId: string;
   host?: string;
   name?: string;
+  version?: string;
+  intervalMs?: number;
   timestamp: number;
   cpu: number;
   memory: number;

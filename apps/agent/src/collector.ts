@@ -9,6 +9,7 @@ import type {
 } from "@server-monitor/shared";
 import { collectPm2Processes } from "./pm2-collector";
 import { collectSystemProcesses } from "./system-collector";
+import { version as agentVersion } from "../package.json";
 
 // Thresholds
 const CPU_CRITICAL = 85;
@@ -33,6 +34,11 @@ export class Collector {
   private history: MetricPoint[] = [];
   private hostname = os.hostname();
   private activeAlerts = new Set<string>();
+  readonly intervalMs: number;
+
+  constructor(intervalMs: number) {
+    this.intervalMs = intervalMs;
+  }
 
   async collect(serverId: string): Promise<ServerStats> {
     const [cpuLoad, mem, fsSize, netStats, time] = await Promise.all([
@@ -103,8 +109,10 @@ export class Collector {
 
     return {
       serverId,
+      intervalMs: this.intervalMs,
       timestamp: now,
       host: this.hostname,
+      version: agentVersion,
       name: this.hostname,
       cpu: cpuPct,
       memory: memPct,

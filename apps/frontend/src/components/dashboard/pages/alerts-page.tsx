@@ -16,13 +16,7 @@ import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { AlertEvent, Severity } from '@/lib/types';
-import { useAlerts } from '@/hooks/use-alerts';
-
-interface AlertsPageProps {
-  stats: { alerts?: AlertEvent[] } | null;
-  loading: boolean;
-  serverId?: string;
-}
+import { useSelectedId, useStats, useStatsLoading, useAlerts, useAlertsLoading, useAlertsError, useAcknowledgeAlert, useAcknowledgeAll } from '@/store';
 
 const SEVERITY_META: Record<Severity, { icon: React.ComponentType<{ className?: string }>; color: string; badge: string; label: string }> = {
   critical: {
@@ -66,8 +60,15 @@ function formatFullDate(ts: number): string {
   });
 }
 
-export function AlertsPage({ stats, loading, serverId }: AlertsPageProps) {
-  const { alerts: apiAlerts, loading: apiLoading, acknowledgeAlert, acknowledgeAll, error } = useAlerts(serverId);
+export function AlertsPage() {
+  const stats = useStats();
+  const loading = useStatsLoading();
+  const serverId = useSelectedId();
+  const apiAlerts = useAlerts();
+  const apiLoading = useAlertsLoading();
+  const error = useAlertsError();
+  const acknowledgeAlert = useAcknowledgeAlert();
+  const acknowledgeAll = useAcknowledgeAll();
 
   const [severityFilter, setSeverityFilter] = useState<Severity | 'all'>('all');
   const [showAcknowledged, setShowAcknowledged] = useState(false);

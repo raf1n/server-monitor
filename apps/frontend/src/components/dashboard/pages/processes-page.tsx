@@ -24,14 +24,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api } from "@/lib/api";
-import type { ProcessInfo, ServerStats } from "@/lib/types";
-
-interface ProcessesPageProps {
-  stats: ServerStats | null;
-  loading: boolean;
-  serverId: string;
-  compactMode?: boolean;
-}
+import { useSelectedId, useSettings, useStats, useStatsLoading } from '@/store';
+import type { ProcessInfo } from "@/lib/types";
 
 type SortKey = "name" | "status" | "cpu" | "memory" | "uptime" | "restarts";
 type SortDir = "asc" | "desc";
@@ -83,12 +77,12 @@ function cpuColor(cpu: number): string {
   return "text-foreground";
 }
 
-export function ProcessesPage({
-  stats,
-  loading,
-  serverId,
-  compactMode = false,
-}: ProcessesPageProps) {
+export function ProcessesPage() {
+  const stats = useStats();
+  const loading = useStatsLoading();
+  const serverId = useSelectedId();
+  const settings = useSettings();
+  const compactMode = settings.compactMode;
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("cpu");
   const [sortDir, setSortDir] = useState<SortDir>("desc");

@@ -28,11 +28,15 @@ export class MetricsProcessor extends WorkerHost {
     const data = job.data as Record<string, unknown>;
     const serverId = data.serverId as string;
     if (!serverId) return;
+    const intervalMs = data.intervalMs != null ? Number(data.intervalMs) : undefined;
+    const agentVersion = data.version as string | undefined;
 
     await this.servers.register(
       serverId,
       (data.host as string) || undefined,
       (data.name as string) || undefined,
+      intervalMs,
+      agentVersion,
     );
 
     if (this.metricRepo) {
