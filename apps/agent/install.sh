@@ -105,9 +105,15 @@ for cmd in node nodejs /usr/local/bin/node /usr/bin/node /opt/homebrew/bin/node 
   fi
 done
 
-# Check common NVM locations (avoid node --version which fails under sudo)
+# Check NVM locations (use real user's home under sudo, not /root)
 if [[ -z "${NODE_CMD}" ]]; then
-  for dir in "$HOME/.nvm/versions/node" "${NVM_DIR:-}/versions/node" /root/.nvm/versions/node; do
+  nvm_dirs=()
+  if [[ -n "${SUDO_USER:-}" ]]; then
+    real_home="$(eval echo "~${SUDO_USER}")"
+    nvm_dirs+=("${real_home}/.nvm/versions/node")
+  fi
+  nvm_dirs+=("$HOME/.nvm/versions/node" "${NVM_DIR:-}/versions/node" /root/.nvm/versions/node)
+  for dir in "${nvm_dirs[@]}"; do
     if [[ -d "$dir" ]]; then
       candidate="$(ls -t "$dir" 2>/dev/null | head -1)"
       if [[ -n "$candidate" && -x "$dir/$candidate/bin/node" ]]; then
@@ -118,18 +124,16 @@ if [[ -z "${NODE_CMD}" ]]; then
   done
 fi
 
-# Under sudo, PATH is often restricted — try the original user's PATH
+# Under sudo, try to find node via the original user's shell (which has NVM loaded)
 if [[ -z "${NODE_CMD}" && -n "${SUDO_USER:-}" ]]; then
-  ORIG_PATH="$(sudo -u "$SUDO_USER" bash -c 'echo "$PATH"' 2>/dev/null || true)"
-  NODE_CMD="$(PATH="${ORIG_PATH:-}" command -v node 2>/dev/null || true)"
+  NODE_CMD="$(sudo -u "$SUDO_USER" -i bash -c 'command -v node' 2>/dev/null || true)"
+  if [[ -z "${NODE_CMD}" ]]; then
+    NODE_CMD="$(sudo -u "$SUDO_USER" bash -l -c 'command -v node' 2>/dev/null || true)"
+  fi
 fi
 
 if [[ -z "${NODE_CMD}" ]]; then
   fatal "Node.js is not found. Use: sudo -E bash <(curl -sSL ...)"
-fi
-
-if [[ -z "${NODE_CMD}" ]]; then
-  fatal "Node.js is not installed. Install Node.js >= 18 first: https://nodejs.org"
 fi
 
 NODE_MAJOR="$("${NODE_CMD}" -e "console.log(process.versions.node.split('.')[0])")"
