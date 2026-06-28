@@ -98,20 +98,35 @@ fi
 info "Checking prerequisites..."
 
 NODE_CMD=""
-for cmd in \
-  "${NODE:-}" \
-  node nodejs \
-  /usr/local/bin/node /usr/bin/node \
-  /opt/homebrew/bin/node \
-  /home/linuxbrew/.linuxbrew/bin/node \
-  "$HOME/.nvm/versions/node/$(node --version 2>/dev/null)/bin/node" \
-  "$NVM_DIR/versions/node/$(node --version 2>/dev/null)/bin/node" \
-  /snap/node/*/bin/node; do
+for cmd in node nodejs /usr/local/bin/node /usr/bin/node /opt/homebrew/bin/node /home/linuxbrew/.linuxbrew/bin/node; do
   if command -v "$cmd" &>/dev/null; then
     NODE_CMD="$(command -v "$cmd")"
     break
   fi
 done
+
+# Check common NVM locations (avoid node --version which fails under sudo)
+if [[ -z "${NODE_CMD}" ]]; then
+  for dir in "$HOME/.nvm/versions/node" "$NVM_DIR/versions/node" /root/.nvm/versions/node; do
+    if [[ -d "$dir" ]]; then
+      candidate="$(ls -t "$dir" 2>/dev/null | head -1)"
+      if [[ -n "$candidate" && -x "$dir/$candidate/bin/node" ]]; then
+        NODE_CMD="$dir/$candidate/bin/node"
+        break
+      fi
+    fi
+  done
+fi
+
+# Under sudo, PATH is often restricted — try the original user's PATH
+if [[ -z "${NODE_CMD}" && -n "${SUDO_USER:-}" ]]; then
+  ORIG_PATH="$(sudo -u "$SUDO_USER" bash -c 'echo "$PATH"' 2>/dev/null)"
+  NODE_CMD="$(PATH="$ORIG_PATH" command -v node 2>/dev/null || true)"
+fi
+
+if [[ -z "${NODE_CMD}" ]]; then
+  fatal "Node.js is not found. Use: sudo -E bash <(curl -sSL ...)"
+fi
 
 if [[ -z "${NODE_CMD}" ]]; then
   fatal "Node.js is not installed. Install Node.js >= 18 first: https://nodejs.org"
