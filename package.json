@@ -29,6 +29,7 @@
     "docker:logs": "docker compose logs -f",
     "docker:prod:up": "docker compose -f docker-compose.prod.yml up -d",
     "docker:prod:down": "docker compose -f docker-compose.prod.yml down",
+    "docker:prod:stop": "docker compose -f docker-compose.prod.yml stop",
     "docker:prod:rebuild": "VITE_API_URL= VITE_SOCKET_URL= pnpm --filter @server-monitor/frontend build && docker compose -f docker-compose.prod.yml up -d --build",
     "docker:prod:logs": "docker compose -f docker-compose.prod.yml logs -f",
     "deploy": "bash deploy.sh"

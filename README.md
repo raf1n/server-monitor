@@ -165,7 +165,8 @@ server-monitor/
 | `pnpm docker:rebuild` | Rebuild and restart dev containers    |
 | `pnpm docker:logs`  | Tail dev container logs                  |
 | `pnpm docker:prod:up` | Start prod containers (backend + DBs)  |
-| `pnpm docker:prod:down` | Stop prod containers (`-- -v` to wipe volumes) |
+| `pnpm docker:prod:stop` | Stop prod containers without removing them  |
+| `pnpm docker:prod:down` | Stop and remove prod containers (`-- -v` to wipe volumes) |
 | `pnpm docker:prod:rebuild` | Build frontend, rebuild and restart prod backend |
 | `pnpm docker:prod:logs` | Tail prod container logs             |
 | `pnpm deploy`       | Full deploy (deploy.sh)                  |
