@@ -1,32 +1,64 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Activity, Cpu, HardDrive, MemoryStick } from 'lucide-react';
-import { AlertList } from '@/components/dashboard/alert-list';
-import { ChartCard } from '@/components/dashboard/chart-card';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Activity, Cpu, HardDrive, MemoryStick } from "lucide-react";
+import { AlertList } from "@/components/dashboard/alert-list";
+import { ChartCard } from "@/components/dashboard/chart-card";
 import {
   DiskBarChart,
   NetworkChart,
   TimeSeriesChart,
-} from '@/components/dashboard/charts';
-import { ProcessTable } from '@/components/dashboard/process-table';
-import { Sidebar } from '@/components/dashboard/sidebar';
-import { StatCard, statusFromValue } from '@/components/dashboard/stat-card';
-import { Topbar } from '@/components/dashboard/topbar';
-import { LoginPage } from '@/components/auth/login-page';
-import { useAuth } from '@/hooks/use-auth';
-import { useStats } from '@/hooks/use-stats';
-import { api } from '@/lib/api';
-import { useAlerts } from '@/hooks/use-alerts';
-import { useSettings } from '@/hooks/use-settings';
-import { DEMO_SERVERS } from '@/lib/mock-data';
-import type { TimeRange, ServerInfo, AlertEvent } from '@/lib/types';
-import { TIME_RANGE_POINTS } from '@/lib/types';
+} from "@/components/dashboard/charts";
+import { ProcessTable } from "@/components/dashboard/process-table";
+import { Sidebar } from "@/components/dashboard/sidebar";
+import { StatCard, statusFromValue } from "@/components/dashboard/stat-card";
+import { Topbar } from "@/components/dashboard/topbar";
+import { LoginPage } from "@/components/auth/login-page";
+import { useAuth } from "@/hooks/use-auth";
+import { useStats } from "@/hooks/use-stats";
+import { api } from "@/lib/api";
+import { useAlerts } from "@/hooks/use-alerts";
+import { useSettings } from "@/hooks/use-settings";
+import { DEMO_SERVERS } from "@/lib/mock-data";
+import type { TimeRange, ServerInfo, AlertEvent } from "@/lib/types";
+import { TIME_RANGE_POINTS } from "@/lib/types";
 
-const AlertsPage = lazy(() => import('@/components/dashboard/pages/alerts-page').then(m => ({ default: m.AlertsPage })));
-const ProcessesPage = lazy(() => import('@/components/dashboard/pages/processes-page').then(m => ({ default: m.ProcessesPage })));
-const ServersPage = lazy(() => import('@/components/dashboard/pages/servers-page').then(m => ({ default: m.ServersPage })));
-const SettingsPage = lazy(() => import('@/components/dashboard/pages/settings-page').then(m => ({ default: m.SettingsPage })));
-const ProfilePage = lazy(() => import('@/components/dashboard/pages/profile-page').then(m => ({ default: m.ProfilePage })));
-const ApiKeysPage = lazy(() => import('@/components/dashboard/pages/api-keys-page').then(m => ({ default: m.ApiKeysPage })));
+const AlertsPage = lazy(() =>
+  import("@/components/dashboard/pages/alerts-page").then((m) => ({
+    default: m.AlertsPage,
+  })),
+);
+const ProcessesPage = lazy(() =>
+  import("@/components/dashboard/pages/processes-page").then((m) => ({
+    default: m.ProcessesPage,
+  })),
+);
+const ServersPage = lazy(() =>
+  import("@/components/dashboard/pages/servers-page").then((m) => ({
+    default: m.ServersPage,
+  })),
+);
+const SettingsPage = lazy(() =>
+  import("@/components/dashboard/pages/settings-page").then((m) => ({
+    default: m.SettingsPage,
+  })),
+);
+const ProfilePage = lazy(() =>
+  import("@/components/dashboard/pages/profile-page").then((m) => ({
+    default: m.ProfilePage,
+  })),
+);
+const ApiKeysPage = lazy(() =>
+  import("@/components/dashboard/pages/api-keys-page").then((m) => ({
+    default: m.ApiKeysPage,
+  })),
+);
 
 function PageLoader() {
   return (
@@ -48,7 +80,7 @@ function DashboardHome({
   compactMode,
   chartAnimations,
 }: {
-  stats: ReturnType<typeof useStats>['stats'];
+  stats: ReturnType<typeof useStats>["stats"];
   loading: boolean;
   serverId: string;
   servers: ServerInfo[];
@@ -59,39 +91,46 @@ function DashboardHome({
 }) {
   const history = useMemo(
     () => (stats?.history ?? []).slice(-TIME_RANGE_POINTS[timeRange]),
-    [stats, timeRange]
+    [stats, timeRange],
   );
 
   const cpuData = useMemo(
     () => history.map((p) => ({ value: p.cpu })),
-    [history]
+    [history],
   );
   const memData = useMemo(
     () => history.map((p) => ({ value: p.memory })),
-    [history]
+    [history],
   );
   const diskData = useMemo(
     () => history.map((p) => ({ value: p.disk })),
-    [history]
+    [history],
   );
   const procData = useMemo(
     () => history.map((p) => ({ value: stats?.activeProcesses ?? 0 })),
-    [history, stats]
+    [history, stats],
   );
 
   const threshold = Number(criticalThreshold) || 85;
   const warningAt = Math.max(threshold - 5, 50);
-  const cpuStatus = stats ? statusFromValue(stats.cpu, [warningAt, threshold]) : 'good';
-  const memStatus = stats ? statusFromValue(stats.memory, [warningAt, threshold]) : 'good';
-  const diskStatus = stats ? statusFromValue(stats.disk, [warningAt + 5, threshold + 5]) : 'good';
-  const procStatus: 'good' | 'warning' | 'critical' = stats && stats.activeProcesses === 0 ? 'warning' : 'good';
+  const cpuStatus = stats
+    ? statusFromValue(stats.cpu, [warningAt, threshold])
+    : "good";
+  const memStatus = stats
+    ? statusFromValue(stats.memory, [warningAt, threshold])
+    : "good";
+  const diskStatus = stats
+    ? statusFromValue(stats.disk, [warningAt + 5, threshold + 5])
+    : "good";
+  const procStatus: "good" | "warning" | "critical" =
+    stats && stats.activeProcesses === 0 ? "warning" : "good";
 
   return (
-    <div className={compactMode ? 'space-y-3' : 'space-y-6'}>
+    <div className={compactMode ? "space-y-3" : "space-y-6"}>
       <div className="flex flex-col gap-1">
         <h1 className="text-xl font-semibold text-foreground">Overview</h1>
         <p className="text-sm text-muted-foreground">
-          Real-time metrics for{' '}
+          Real-time metrics for{" "}
           <span className="font-medium text-foreground">
             {servers.find((s) => s.id === serverId)?.name}
           </span>
@@ -99,30 +138,96 @@ function DashboardHome({
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="CPU Usage" value={stats?.cpu ?? 0} data={cpuData} status={cpuStatus} loading={loading} icon={Cpu} />
-        <StatCard title="Memory Usage" value={stats?.memory ?? 0} data={memData} status={memStatus} loading={loading} icon={MemoryStick} />
-        <StatCard title="Disk Usage" value={stats?.disk ?? 0} data={diskData} status={diskStatus} loading={loading} icon={HardDrive} />
-        <StatCard title="Active Processes" value={stats?.activeProcesses ?? 0} unit="" data={procData} status={procStatus} loading={loading} icon={Activity} />
+        <StatCard
+          title="CPU Usage"
+          value={stats?.cpu ?? 0}
+          data={cpuData}
+          status={cpuStatus}
+          loading={loading}
+          icon={Cpu}
+        />
+        <StatCard
+          title="Memory Usage"
+          value={stats?.memory ?? 0}
+          data={memData}
+          status={memStatus}
+          loading={loading}
+          icon={MemoryStick}
+        />
+        <StatCard
+          title="Disk Usage"
+          value={stats?.disk ?? 0}
+          data={diskData}
+          status={diskStatus}
+          loading={loading}
+          icon={HardDrive}
+        />
+        <StatCard
+          title="Active Processes"
+          value={stats?.activeProcesses ?? 0}
+          unit=""
+          data={procData}
+          status={procStatus}
+          loading={loading}
+          icon={Activity}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ChartCard title="CPU Usage Over Time" subtitle="Percentage of total CPU capacity" loading={loading}>
-          <TimeSeriesChart data={history} dataKey="cpu" color="hsl(var(--chart-1))" timeRange={timeRange} animate={chartAnimations} />
+        <ChartCard
+          title="CPU Usage Over Time"
+          subtitle="Percentage of total CPU capacity"
+          loading={loading}
+        >
+          <TimeSeriesChart
+            data={history}
+            dataKey="cpu"
+            color="hsl(var(--chart-1))"
+            timeRange={timeRange}
+            animate={chartAnimations}
+          />
         </ChartCard>
-        <ChartCard title="Memory Usage Over Time" subtitle="Percentage of total memory" loading={loading}>
-          <TimeSeriesChart data={history} dataKey="memory" color="hsl(var(--chart-2))" timeRange={timeRange} animate={chartAnimations} />
+        <ChartCard
+          title="Memory Usage Over Time"
+          subtitle="Percentage of total memory"
+          loading={loading}
+        >
+          <TimeSeriesChart
+            data={history}
+            dataKey="memory"
+            color="hsl(var(--chart-2))"
+            timeRange={timeRange}
+            animate={chartAnimations}
+          />
         </ChartCard>
-        <ChartCard title="Disk Usage Per Mount" subtitle="Used space by filesystem mount" loading={loading}>
+        <ChartCard
+          title="Disk Usage Per Mount"
+          subtitle="Used space by filesystem mount"
+          loading={loading}
+        >
           <DiskBarChart data={stats?.mounts ?? []} animate={chartAnimations} />
         </ChartCard>
-        <ChartCard title="Network Traffic" subtitle="Inbound and outbound throughput (KB/s)" loading={loading}>
-          <NetworkChart data={history} timeRange={timeRange} animate={chartAnimations} />
+        <ChartCard
+          title="Network Traffic"
+          subtitle="Inbound and outbound throughput (KB/s)"
+          loading={loading}
+        >
+          <NetworkChart
+            data={history}
+            timeRange={timeRange}
+            animate={chartAnimations}
+          />
         </ChartCard>
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <div className="xl:col-span-2">
-          <ProcessTable processes={stats?.processes ?? []} loading={loading} hasServer={servers.length > 0} compactMode={compactMode} />
+          <ProcessTable
+            processes={stats?.processes ?? []}
+            loading={loading}
+            hasServer={servers.length > 0}
+            compactMode={compactMode}
+          />
         </div>
         <AlertList alerts={stats?.alerts ?? []} loading={loading} />
       </div>
@@ -130,11 +235,21 @@ function DashboardHome({
   );
 }
 
-function Dashboard({ username, email, role, onLogout }: { username?: string; email?: string | null; role?: string; onLogout?: () => void }) {
-  const [activeNav, setActiveNav] = useState('dashboard');
+function Dashboard({
+  username,
+  email,
+  role,
+  onLogout,
+}: {
+  username?: string;
+  email?: string | null;
+  role?: string;
+  onLogout?: () => void;
+}) {
+  const [activeNav, setActiveNav] = useState("dashboard");
   const [servers, setServers] = useState<ServerInfo[]>([]);
-  const [serverId, setServerId] = useState('');
-  const [timeRange, setTimeRange] = useState<TimeRange>('5m');
+  const [serverId, setServerId] = useState("");
+  const [timeRange, setTimeRange] = useState<TimeRange>("5m");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const handleNavigate = useCallback((id: string) => {
@@ -147,11 +262,12 @@ function Dashboard({ username, email, role, onLogout }: { username?: string; ema
   useEffect(() => {
     if (API_HOST === undefined) {
       setServers(DEMO_SERVERS);
-      setServerId(DEMO_SERVERS[0]?.id ?? '');
+      setServerId(DEMO_SERVERS[0]?.id ?? "");
       return;
     }
     const fetchServers = () => {
-      api.servers.list()
+      api.servers
+        .list()
         .then((data) => {
           setServers(data);
           setServerId((prev) => {
@@ -159,25 +275,35 @@ function Dashboard({ username, email, role, onLogout }: { username?: string; ema
             return data[0]?.id ?? prev;
           });
         })
-        .catch((err) => console.warn('Failed to fetch servers:', err));
+        .catch((err) => console.warn("Failed to fetch servers:", err));
     };
     fetchServers();
     const onFocus = () => fetchServers();
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, []);
 
-  const statsOptions = useMemo(() => ({
-    refreshInterval: settings.refreshInterval,
-    autoReconnect: settings.autoReconnect,
-  }), [settings.refreshInterval, settings.autoReconnect]);
-
-  const { stats, connection, reconnect } = useStats(serverId, timeRange, statsOptions);
-  const loading = connection === 'connecting';
-
-  const { alerts: apiAlerts, unacknowledgedCount: apiAlertCount, acknowledgeAlert: apiAckAlert, acknowledgeAll: apiAckAll } = useAlerts(
-    API_HOST !== undefined ? serverId : undefined
+  const statsOptions = useMemo(
+    () => ({
+      refreshInterval: settings.refreshInterval,
+      autoReconnect: settings.autoReconnect,
+    }),
+    [settings.refreshInterval, settings.autoReconnect],
   );
+
+  const { stats, connection, reconnect } = useStats(
+    serverId,
+    timeRange,
+    statsOptions,
+  );
+  const loading = connection === "connecting";
+
+  const {
+    alerts: apiAlerts,
+    unacknowledgedCount: apiAlertCount,
+    acknowledgeAlert: apiAckAlert,
+    acknowledgeAll: apiAckAll,
+  } = useAlerts(API_HOST !== undefined ? serverId : undefined);
   const hasApi = API_HOST !== undefined;
   const alertSource = hasApi ? apiAlerts : (stats?.alerts ?? []);
   const totalAlertCount = hasApi
@@ -188,19 +314,19 @@ function Dashboard({ username, email, role, onLogout }: { username?: string; ema
   const audioCtxRef = useRef<AudioContext | null>(null);
   useEffect(() => {
     const handler = () => {
-      if (audioCtxRef.current?.state === 'suspended') {
+      if (audioCtxRef.current?.state === "suspended") {
         audioCtxRef.current.resume();
       }
     };
-    document.addEventListener('click', handler, { once: true });
-    return () => document.removeEventListener('click', handler);
+    document.addEventListener("click", handler, { once: true });
+    return () => document.removeEventListener("click", handler);
   }, []);
 
   // Alert sound + push notification for new critical alerts
   const prevCriticalIds = useRef(new Set<string>());
   useEffect(() => {
     const newCritical = alertSource.filter(
-      (a) => a.severity === 'critical' && !prevCriticalIds.current.has(a.id)
+      (a) => a.severity === "critical" && !prevCriticalIds.current.has(a.id),
     );
     for (const alert of newCritical) {
       prevCriticalIds.current.add(alert.id);
@@ -211,7 +337,7 @@ function Dashboard({ username, email, role, onLogout }: { username?: string; ema
             audioCtxRef.current = new AudioContext();
           }
           const ctx = audioCtxRef.current;
-          if (ctx.state !== 'suspended') {
+          if (ctx.state !== "suspended") {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
             osc.frequency.value = 880;
@@ -222,27 +348,29 @@ function Dashboard({ username, email, role, onLogout }: { username?: string; ema
             osc.stop(ctx.currentTime + 0.3);
           }
         } catch (err) {
-          console.warn('Failed to play alert sound:', err);
+          console.warn("Failed to play alert sound:", err);
         }
       }
 
-      if (settings.notifications && typeof Notification !== 'undefined') {
-        if (Notification.permission === 'granted') {
-          new Notification('Critical Alert', {
+      if (settings.notifications && typeof Notification !== "undefined") {
+        if (Notification.permission === "granted") {
+          new Notification("Critical Alert", {
             body: alert.message,
             tag: alert.id,
           });
-        } else if (Notification.permission === 'default') {
+        } else if (Notification.permission === "default") {
           Notification.requestPermission()
             .then((perm) => {
-              if (perm === 'granted') {
-                new Notification('Critical Alert', {
+              if (perm === "granted") {
+                new Notification("Critical Alert", {
                   body: alert.message,
                   tag: alert.id,
                 });
               }
             })
-            .catch((err) => console.warn('Notification permission request failed:', err));
+            .catch((err) =>
+              console.warn("Notification permission request failed:", err),
+            );
         }
       }
     }
@@ -250,13 +378,20 @@ function Dashboard({ username, email, role, onLogout }: { username?: string; ema
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar active={activeNav} onNavigate={handleNavigate} alertCount={totalAlertCount} mobileOpen={mobileSidebarOpen} onMobileToggle={() => setMobileSidebarOpen(false)} />
+      <Sidebar
+        active={activeNav}
+        onNavigate={handleNavigate}
+        alertCount={totalAlertCount}
+        mobileOpen={mobileSidebarOpen}
+        onMobileToggle={() => setMobileSidebarOpen(false)}
+      />
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar
           onToggleSidebar={() => setMobileSidebarOpen((p) => !p)}
           servers={servers}
           selectedServerId={serverId}
+          role={role}
           onServerChange={setServerId}
           timeRange={timeRange}
           onTimeRangeChange={setTimeRange}
@@ -274,7 +409,7 @@ function Dashboard({ username, email, role, onLogout }: { username?: string; ema
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           <div className="mx-auto max-w-[1600px]">
-            {activeNav === 'dashboard' && (
+            {activeNav === "dashboard" && (
               <DashboardHome
                 stats={stats}
                 loading={loading}
@@ -286,7 +421,7 @@ function Dashboard({ username, email, role, onLogout }: { username?: string; ema
                 chartAnimations={settings.chartAnimations}
               />
             )}
-            {activeNav === 'servers' && (
+            {activeNav === "servers" && (
               <Suspense fallback={<PageLoader />}>
                 <ServersPage
                   servers={servers}
@@ -296,27 +431,36 @@ function Dashboard({ username, email, role, onLogout }: { username?: string; ema
                 />
               </Suspense>
             )}
-            {activeNav === 'processes' && (
+            {activeNav === "processes" && (
               <Suspense fallback={<PageLoader />}>
-                <ProcessesPage stats={stats} loading={loading} serverId={serverId} compactMode={settings.compactMode} />
+                <ProcessesPage
+                  stats={stats}
+                  loading={loading}
+                  serverId={serverId}
+                  compactMode={settings.compactMode}
+                />
               </Suspense>
             )}
-            {activeNav === 'alerts' && (
+            {activeNav === "alerts" && (
               <Suspense fallback={<PageLoader />}>
-                <AlertsPage stats={stats} loading={loading} serverId={serverId} />
+                <AlertsPage
+                  stats={stats}
+                  loading={loading}
+                  serverId={serverId}
+                />
               </Suspense>
             )}
-            {activeNav === 'settings' && (
+            {activeNav === "settings" && (
               <Suspense fallback={<PageLoader />}>
                 <SettingsPage />
               </Suspense>
             )}
-            {activeNav === 'api-keys' && (
+            {activeNav === "api-keys" && (
               <Suspense fallback={<PageLoader />}>
                 <ApiKeysPage />
               </Suspense>
             )}
-            {activeNav === 'profile' && (
+            {activeNav === "profile" && (
               <Suspense fallback={<PageLoader />}>
                 <ProfilePage />
               </Suspense>
@@ -336,5 +480,12 @@ export default function App() {
     return <LoginPage onLogin={login} />;
   }
 
-  return <Dashboard username={username} email={email} role={role} onLogout={logout} />;
+  return (
+    <Dashboard
+      username={username}
+      email={email}
+      role={role}
+      onLogout={logout}
+    />
+  );
 }

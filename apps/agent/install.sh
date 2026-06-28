@@ -97,15 +97,18 @@ fi
 
 info "Checking prerequisites..."
 
-NODE_CMD=""
-for cmd in node nodejs /usr/local/bin/node /usr/bin/node /opt/homebrew/bin/node /home/linuxbrew/.linuxbrew/bin/node; do
+# Phase 1: find a system-wide node that the service user can execute.
+# NVM nodes live under user home dirs (0700) and are invisible to the service user.
+SYSTEM_NODE=""
+for cmd in /usr/local/bin/node /usr/bin/node /opt/homebrew/bin/node /home/linuxbrew/.linuxbrew/bin/node node nodejs; do
   if command -v "$cmd" &>/dev/null; then
-    NODE_CMD="$(command -v "$cmd")"
+    SYSTEM_NODE="$(command -v "$cmd")"
     break
   fi
 done
 
-# Check NVM locations (use real user's home under sudo, not /root)
+# Phase 2: find any node (including NVM) for the version check.
+NODE_CMD="${SYSTEM_NODE}"
 if [[ -z "${NODE_CMD}" ]]; then
   nvm_dirs=()
   if [[ -n "${SUDO_USER:-}" ]]; then
@@ -142,6 +145,17 @@ if [[ "${NODE_MAJOR}" -lt 18 ]]; then
 fi
 ok "Node.js $("${NODE_CMD}" --version)"
 
+# If no system-wide node is available, symlink the NVM node so the service user can reach it.
+if [[ -z "${SYSTEM_NODE}" && "${OS}" == "Linux" ]]; then
+  mkdir -p /usr/local/bin
+  ln -sf "${NODE_CMD}" /usr/local/bin/node
+  SYSTEM_NODE="/usr/local/bin/node"
+  info "Symlinked ${NODE_CMD} -> /usr/local/bin/node for service access"
+fi
+
+# Use the system-safe node for the service, fall back to discovered node otherwise.
+SERVICE_NODE="${SYSTEM_NODE:-${NODE_CMD}}"
+
 if [[ "${OS}" == "Linux" ]] && ! command -v systemctl &>/dev/null; then
   warn "systemctl not found — skipping service installation"
   SKIP_SERVICE=true
@@ -159,6 +173,12 @@ if [[ -z "${AGENT_URL}" ]]; then
 fi
 
 [[ -z "${SERVER_ID}" ]] && SERVER_ID="srv-$(hostname | tr '[:upper:]' '[:lower:]')"
+
+# When piped through sudo, env vars set before the pipe only reach curl, not bash.
+# Try to read them from the original user's environment (sudo -E preserves then).
+if [[ -z "${API_KEY}" && -n "${SUDO_USER:-}" ]]; then
+  API_KEY="$(sudo -u "$SUDO_USER" bash -c 'echo "${API_KEY:-}"' 2>/dev/null || true)"
+fi
 [[ -z "${API_KEY}" ]] && warn "No API_KEY set — agent will fail unless backend AGENT_API_KEY is empty"
 
 # ── download agent ────────────────────────────
@@ -213,7 +233,7 @@ Wants=network-online.target
 Type=simple
 User=${AGENT_USER}
 WorkingDirectory=${AGENT_DIR}
-ExecStart=${NODE_CMD} ${AGENT_BIN}
+ExecStart=${SERVICE_NODE} ${AGENT_BIN}
 EnvironmentFile=${CONFIG_FILE}
 Restart=on-failure
 RestartSec=10
