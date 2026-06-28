@@ -142,6 +142,10 @@ server-monitor/
 │           ├── components/dashboard/  # UI components
 │           │   ├── pages/             # Page-level views
 │           │   └── *.tsx              # Dashboard widgets
+│           ├── layouts/               # Layout components (e.g. DashboardLayout)
+│           ├── pages/                 # Top-level page components
+│           ├── router.tsx             # Route definitions
+│           ├── store/                 # Zustand store (slices + selectors)
 │           ├── hooks/                 # React hooks
 │           └── lib/                   # Types, utils, mock data
 │
@@ -180,7 +184,7 @@ server-monitor/
 | `SERVER_ID`   | `srv-prod-01`           | Unique server identifier                               |
 | `API_URL`     | `http://localhost:3300` | Backend ingest endpoint                                |
 | `API_KEY`     | —                       | API key (per-server key from dashboard, or master key) |
-| `INTERVAL_MS` | `2000`                  | Collection interval in ms                              |
+| `INTERVAL_MS` | `60000`                 | Collection interval in ms (default 60s)                |
 
 ### Root `.env` (production)
 
@@ -252,6 +256,7 @@ Save via the Settings page in the dashboard, or directly via `PUT /settings`.
 | ------ | ------------- | ------------------------------------ |
 | `POST` | `/ingest`     | Receive agent metrics (API key auth) |
 | `GET`  | `/health`     | Health check (DB + Redis)            |
+| `GET`  | `/health/version` | Build information (version + build hash) |
 | `POST` | `/auth/login` | Login, returns JWT                   |
 | `GET`  | `/agent.js`   | Download bundled agent               |
 | `GET`  | `/install.sh` | Download agent install script        |
@@ -261,7 +266,8 @@ Save via the Settings page in the dashboard, or directly via `PUT /settings`.
 | Method  | Path                      | Description                 |
 | ------- | ------------------------- | --------------------------- |
 | `GET`   | `/servers`                | List all registered servers |
-| `GET`   | `/servers/:id/metrics`    | Historical metric points    |
+| `GET`   | `/servers/:id/metrics`    | Historical metric points (interval-aware sampling) |
+| `GET`   | `/servers/:id/metrics/latest` | Latest raw snapshot (full ServerStats) |
 | `GET`   | `/servers/:id/processes`  | Latest process snapshot     |
 | `GET`   | `/alerts`                 | List alerts (filterable)    |
 | `PATCH` | `/alerts/:id/acknowledge` | Acknowledge an alert        |

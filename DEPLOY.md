@@ -121,7 +121,7 @@ server {
     }
 
     # Public endpoints (no /api/ prefix — excluded in backend)
-    location ~ ^/(ingest|health|agent\.js|install\.sh|agent-info)$ {
+    location ~ ^/(ingest|health|health/version|agent\.js|install\.sh|agent-info)$ {
         proxy_pass http://localhost:3300;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
