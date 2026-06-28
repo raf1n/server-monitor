@@ -1,6 +1,6 @@
 # Nginx Configuration
 
-Sample configs for nginx running on the host. The backend runs in Docker on `localhost:3300`, frontend static files are at `/var/www/server-monitor/`.
+Sample configs for nginx running on the host. The backend runs in Docker on `localhost:3300`, frontend static files are at `/var/www/server-monitor-frontend/`.
 
 ---
 
@@ -13,7 +13,7 @@ server {
     listen 80;
     server_name monitor.your-domain.com;
 
-    root /var/www/server-monitor;
+    root /var/www/server-monitor-frontend;
     index index.html;
 
     # Frontend — serve static files, SPA fallback to index.html
@@ -77,7 +77,7 @@ server {
     ssl_certificate /etc/letsencrypt/live/monitor.your-domain.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/monitor.your-domain.com/privkey.pem;
 
-    root /var/www/server-monitor;
+    root /var/www/server-monitor-frontend;
     index index.html;
 
     # Frontend — serve static files, SPA fallback to index.html

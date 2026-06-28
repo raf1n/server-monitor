@@ -60,7 +60,7 @@ fi
 
 REPO_URL="${REPO_URL:-}"
 INSTALL_DIR="${INSTALL_DIR:-/opt/server-monitor}"
-FRONTEND_DIR="/var/www/server-monitor"
+FRONTEND_DIR="${FRONTEND_DIR:-/var/www/server-monitor-frontend}"
 
 # ─────────────────────────────────────────────
 # 1. System dependencies
@@ -170,10 +170,20 @@ log "Frontend built"
 # 5. Deploy frontend static files
 # ─────────────────────────────────────────────
 
+if [ "$INSTALL_DIR" = "$FRONTEND_DIR" ]; then
+  err "INSTALL_DIR ($INSTALL_DIR) and FRONTEND_DIR ($FRONTEND_DIR) must be different."
+  err "The frontend files would overwrite the repo. Run with a separate FRONTEND_DIR:"
+  err "  INSTALL_DIR=/opt/server-monitor FRONTEND_DIR=$FRONTEND_DIR bash deploy.sh"
+  exit 1
+fi
+
 info "Deploying frontend to $FRONTEND_DIR..."
 mkdir -p "$FRONTEND_DIR"
+TMP_DIST=$(mktemp -d)
+cp -r apps/frontend/dist/* "$TMP_DIST/"
 rm -rf "${FRONTEND_DIR:?}"/*
-cp -r apps/frontend/dist/* "$FRONTEND_DIR/"
+cp -r "$TMP_DIST"/* "$FRONTEND_DIR/"
+rm -rf "$TMP_DIST"
 log "Frontend deployed to $FRONTEND_DIR"
 
 # ─────────────────────────────────────────────

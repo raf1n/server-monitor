@@ -53,10 +53,10 @@ This produces `apps/frontend/dist/` with the static SPA.
 
 ```bash
 # Create the directory on VPS
-ssh user@your-vps "mkdir -p /var/www/server-monitor"
+ssh user@your-vps "mkdir -p /var/www/server-monitor-frontend"
 
 # Copy files
-scp -r apps/frontend/dist/* user@your-vps:/var/www/server-monitor/
+scp -r apps/frontend/dist/* user@your-vps:/var/www/server-monitor-frontend/
 ```
 
 ## Step 4: Start backend + databases on VPS
@@ -89,7 +89,7 @@ server {
     ssl_certificate /etc/letsencrypt/live/monitor.your-domain.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/monitor.your-domain.com/privkey.pem;
 
-    root /var/www/server-monitor;
+    root /var/www/server-monitor-frontend;
     index index.html;
 
     # Frontend — serve static files, SPA fallback to index.html
@@ -205,7 +205,7 @@ Agents using the master key and agents using per-server keys can coexist. The in
 ```bash
 # On your dev machine
 VITE_API_URL= VITE_SOCKET_URL= pnpm build:frontend
-scp -r apps/frontend/dist/* user@your-vps:/var/www/server-monitor/
+scp -r apps/frontend/dist/* user@your-vps:/var/www/server-monitor-frontend/
 ```
 
 No restart needed — nginx serves the files directly. Users get the new version on next page load.
