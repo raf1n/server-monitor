@@ -172,7 +172,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=${AGENT_USER}
-ExecStart=/usr/bin/node ${AGENT_BIN}
+ExecStart=${NODE_CMD} ${AGENT_BIN}
 EnvironmentFile=${CONFIG_FILE}
 Restart=on-failure
 RestartSec=10
