@@ -1,11 +1,12 @@
 import { Globe, MapPin, Monitor, Wifi } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAppSelector, useAppDispatch } from "@/store";
+import { useGetServersQuery } from "@/features/servers/serversApi";
+import { selectSelectedId, selectServers } from "@/features/servers/serversSelectors";
+import { selectServer } from "@/features/servers/serversSlice";
+import { selectSettings } from "@/features/settings/settingsSelectors";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import {
-  useServers, useSelectedId, useSelectServer,
-  useSettings,
-} from "@/store";
 import type { ServerInfo, ServerStatus } from "@/lib/types";
 
 const STATUS_STYLES: Record<ServerStatus, { label: string; dot: string; bg: string; border: string }> = {
@@ -30,7 +31,7 @@ function ServerCard({
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">{server.name}</p>
-              <p className="text-xs text-muted-foreground">{showSensitiveData ? server.host : '***'}</p>
+              <p className="text-xs text-muted-foreground">{showSensitiveData ? server.host : "***"}</p>
             </div>
           </div>
           <Badge variant="outline" className={cn("gap-1.5", style.border, style.bg)}>
@@ -40,7 +41,7 @@ function ServerCard({
         </div>
         <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{server.region}</span>
-          <span className="flex items-center gap-1"><Wifi className="h-3.5 w-3.5" />{showSensitiveData ? server.host : '***'}</span>
+          <span className="flex items-center gap-1"><Wifi className="h-3.5 w-3.5" />{showSensitiveData ? server.host : "***"}</span>
           <span className="flex items-center gap-1"><Globe className="h-3.5 w-3.5" />{server.id}</span>
         </div>
       </Card>
@@ -49,10 +50,16 @@ function ServerCard({
 }
 
 export function ServersPage() {
-  const servers = useServers();
-  const serverId = useSelectedId();
-  const selectServer = useSelectServer();
-  const settings = useSettings();
+  const dispatch = useAppDispatch();
+  const serverId = useAppSelector(selectSelectedId);
+  const settings = useAppSelector(selectSettings);
+  const cachedServers = useAppSelector(selectServers);
+
+  const { data: apiServers = [] } = useGetServersQuery(undefined, {
+    skip: !import.meta.env.VITE_API_URL,
+  });
+
+  const servers = cachedServers.length > 0 ? cachedServers : apiServers;
 
   const onlineCount = servers.filter((s) => s.status === "online").length;
   const degradedCount = servers.filter((s) => s.status === "degraded").length;
@@ -80,7 +87,7 @@ export function ServersPage() {
       </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {servers.map((server) => (
-          <ServerCard key={server.id} server={server} isSelected={server.id === serverId} onSelect={() => selectServer(server.id)} showSensitiveData={settings.showSensitiveData} />
+          <ServerCard key={server.id} server={server} isSelected={server.id === serverId} onSelect={() => dispatch(selectServer(server.id))} showSensitiveData={settings.showSensitiveData} />
         ))}
       </div>
     </div>

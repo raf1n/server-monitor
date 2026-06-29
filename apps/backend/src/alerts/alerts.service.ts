@@ -6,7 +6,7 @@ import { SettingsService } from '../settings/settings.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { StatsGateway } from '../websocket/stats.gateway';
 
-interface Thresholds {
+export interface Thresholds {
   cpuCritical: number;
   cpuWarn: number;
   memCritical: number;
@@ -55,7 +55,7 @@ export class AlertsService implements OnModuleDestroy {
     if (params.severity) where.severity = params.severity;
     if (params.acknowledged !== undefined) where.acknowledged = params.acknowledged;
 
-    return this.alertRepo.find({
+    return await this.alertRepo.find({
       where,
       order: { timestamp: 'DESC' },
       take: Math.min(params.limit || 100, 500),
@@ -63,20 +63,24 @@ export class AlertsService implements OnModuleDestroy {
     });
   }
 
-  async count(params: { serverId?: string; acknowledged?: boolean; severity?: string }): Promise<number> {
+  async count(params: {
+    serverId?: string;
+    acknowledged?: boolean;
+    severity?: string;
+  }): Promise<number> {
     const where: FindOptionsWhere<AlertEntity> = {};
     if (params.serverId) where.serverId = params.serverId;
     if (params.acknowledged !== undefined) where.acknowledged = params.acknowledged;
     if (params.severity) where.severity = params.severity;
-    return this.alertRepo.count({ where });
+    return await this.alertRepo.count({ where });
   }
 
   async findOne(id: string): Promise<AlertEntity | null> {
-    return this.alertRepo.findOneBy({ id });
+    return await this.alertRepo.findOneBy({ id });
   }
 
   async findBySourceId(sourceId: string): Promise<AlertEntity | null> {
-    return this.alertRepo.findOneBy({ sourceId });
+    return await this.alertRepo.findOneBy({ sourceId });
   }
 
   async create(data: Partial<AlertEntity>): Promise<AlertEntity> {
@@ -84,12 +88,12 @@ export class AlertsService implements OnModuleDestroy {
       ...data,
       timestamp: data.timestamp || new Date(),
     });
-    return this.alertRepo.save(alert);
+    return await this.alertRepo.save(alert);
   }
 
   async acknowledge(id: string): Promise<AlertEntity | null> {
     await this.alertRepo.update(id, { acknowledged: true });
-    return this.findOne(id);
+    return await this.findOne(id);
   }
 
   async acknowledgeAll(serverId?: string): Promise<number> {
@@ -112,21 +116,51 @@ export class AlertsService implements OnModuleDestroy {
   async loadThresholds(): Promise<Thresholds> {
     if (!this.settingsService) return { ...DEFAULT_THRESHOLDS };
     const t = { ...DEFAULT_THRESHOLDS };
-    const critical = await this.settingsService.get('criticalThreshold');
-    if (critical) {
-      const n = Number(critical);
-      if (n > 0 && n <= 100) {
-        t.cpuCritical = n;
-        t.memCritical = n;
-        t.cpuWarn = Math.max(n - 10, 30);
-        t.memWarn = Math.max(n - 10, 30);
+
+    const read = async (key: string): Promise<number | null> => {
+      const raw = await this.settingsService!.get(key);
+      if (raw) {
+        const n = Number(raw);
+        if (n > 0 && n <= 100) return n;
+      }
+      return null;
+    };
+
+    const cpuCrit = await read('threshold.cpu.critical');
+    const cpuW = await read('threshold.cpu.warn');
+    const memCrit = await read('threshold.mem.critical');
+    const memW = await read('threshold.mem.warn');
+    const diskCrit = await read('threshold.disk.critical');
+
+    if (cpuCrit !== null) t.cpuCritical = cpuCrit;
+    if (cpuW !== null) t.cpuWarn = cpuW;
+    if (memCrit !== null) t.memCritical = memCrit;
+    if (memW !== null) t.memWarn = memW;
+    if (diskCrit !== null) t.diskCritical = diskCrit;
+
+    // Legacy single criticalThreshold fallback for cpu/mem critical
+    if (cpuCrit === null || memCrit === null) {
+      const legacy = await this.settingsService.get('criticalThreshold');
+      if (legacy) {
+        const n = Number(legacy);
+        if (n > 0 && n <= 100) {
+          if (cpuCrit === null) t.cpuCritical = n;
+          if (memCrit === null) t.memCritical = n;
+          if (cpuW === null) t.cpuWarn = Math.max(n - 10, 30);
+          if (memW === null) t.memWarn = Math.max(n - 10, 30);
+        }
       }
     }
-    const diskRaw = await this.settingsService.get('alert.threshold.disk');
-    if (diskRaw) {
-      const n = Number(diskRaw);
-      if (n > 0 && n <= 100) t.diskCritical = n;
+
+    // Legacy alert.threshold.disk fallback
+    if (diskCrit === null) {
+      const diskRaw = await this.settingsService.get('alert.threshold.disk');
+      if (diskRaw) {
+        const n = Number(diskRaw);
+        if (n > 0 && n <= 100) t.diskCritical = n;
+      }
     }
+
     return t;
   }
 
@@ -140,12 +174,23 @@ export class AlertsService implements OnModuleDestroy {
     return 5;
   }
 
-  async evaluateAndCreate(serverId: string, cpu: number, memory: number, disk: number): Promise<void> {
+  async evaluateAndCreate(
+    serverId: string,
+    cpu: number,
+    memory: number,
+    disk: number,
+  ): Promise<void> {
     const thresholds = await this.loadThresholds();
     const cooldownMs = (await this.loadCooldownMinutes()) * 60_000;
     const now = Date.now();
 
-    const checks: Array<{ key: string; title: string; message: string; severity: string; fired: boolean }> = [];
+    const checks: Array<{
+      key: string;
+      title: string;
+      message: string;
+      severity: string;
+      fired: boolean;
+    }> = [];
 
     // CPU
     if (cpu > thresholds.cpuCritical) {
@@ -226,13 +271,13 @@ export class AlertsService implements OnModuleDestroy {
         this.logger.warn(`Failed to create alert for ${serverId}: ${(err as Error).message}`);
       }
     }
-
   }
 
   private evictStale() {
     const now = Date.now();
     for (const [key, ts] of this.lastFired) {
-      if (now - ts > 600_000) { // 10 min stale cleanup
+      if (now - ts > 600_000) {
+        // 10 min stale cleanup
         this.lastFired.delete(key);
       }
     }

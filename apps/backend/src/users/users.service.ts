@@ -4,11 +4,11 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
-} from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import * as bcrypt from "bcrypt";
-import { UserEntity, UserRole } from "../database/entities/user.entity";
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { UserEntity, UserRole } from '../database/entities/user.entity';
 
 @Injectable()
 export class UsersService {
@@ -26,14 +26,14 @@ export class UsersService {
     role?: UserRole;
   }): Promise<UserEntity> {
     const existing = await this.findByUsername(data.username);
-    if (existing) throw new ConflictException("Username already taken");
+    if (existing) throw new ConflictException('Username already taken');
 
     const hash = await bcrypt.hash(data.password, 10);
     const user = this.userRepo.create({
       username: data.username,
       password: hash,
       email: data.email,
-      role: data.role || "viewer",
+      role: data.role || 'viewer',
     });
     return this.userRepo.save(user);
   }
@@ -70,11 +70,11 @@ export class UsersService {
     },
   ): Promise<UserEntity> {
     const user = await this.findByIdOrUsername(id);
-    if (!user) throw new NotFoundException("User not found");
+    if (!user) throw new NotFoundException('User not found');
 
     if (data.username && data.username !== user.username) {
       const existing = await this.findByUsername(data.username);
-      if (existing) throw new ConflictException("Username already taken");
+      if (existing) throw new ConflictException('Username already taken');
       user.username = data.username;
     }
 
@@ -85,12 +85,12 @@ export class UsersService {
     if (data.newPassword) {
       if (!data.currentPassword) {
         throw new BadRequestException(
-          "Current password is required to set a new password",
+          'Current password is required to set a new password',
         );
       }
       const valid = await bcrypt.compare(data.currentPassword, user.password);
       if (!valid)
-        throw new BadRequestException("Current password is incorrect");
+        throw new BadRequestException('Current password is incorrect');
       user.password = await bcrypt.hash(data.newPassword, 10);
     }
 

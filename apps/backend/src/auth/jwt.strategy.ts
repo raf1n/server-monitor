@@ -38,8 +38,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload): Promise<{ userId: string; username: string; role: UserRole }> {
-    const user = await this.userRepo.findOne({ where: { id: payload.sub }, select: ['id', 'username', 'role'] });
+  async validate(
+    payload: JwtPayload,
+  ): Promise<{ userId: string; username: string; role: UserRole }> {
+    const user = await this.userRepo.findOne({
+      where: { id: payload.sub },
+      select: ['id', 'username', 'role'],
+    });
     if (!user) {
       throw new UnauthorizedException('User no longer exists');
     }

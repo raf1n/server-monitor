@@ -1,30 +1,30 @@
-import { useState, useEffect } from 'react';
-import { Save, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { api } from '@/lib/api';
+import { useState, useEffect } from "react";
+import { Save, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { api } from "@/lib/api";
 
 export function ProfilePage() {
   const [profile, setProfile] = useState<{ id: string; username: string; email?: string } | null>(null);
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     api.users.me()
       .then((data) => {
         setProfile(data);
         setUsername(data.username);
-        setEmail(data.email || '');
+        setEmail(data.email || "");
       })
-      .catch((err) => console.warn('Failed to fetch profile:', err))
+      .catch((err) => console.warn("Failed to fetch profile:", err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -34,16 +34,16 @@ export function ProfilePage() {
     try {
       const updated = await api.users.update({
         username: username !== profile?.username ? username : undefined,
-        email: email !== (profile?.email || '') ? email : undefined,
+        email: email !== (profile?.email || "") ? email : undefined,
         currentPassword: currentPassword || undefined,
         newPassword: newPassword || undefined,
       });
       setProfile(updated);
-      setCurrentPassword('');
-      setNewPassword('');
-      setMessage({ type: 'success', text: 'Profile updated' });
+      setCurrentPassword("");
+      setNewPassword("");
+      setMessage({ type: "success", text: "Profile updated" });
     } catch (err) {
-      setMessage({ type: 'error', text: (err as Error).message });
+      setMessage({ type: "error", text: (err as Error).message });
     } finally {
       setSaving(false);
     }
@@ -95,12 +95,12 @@ export function ProfilePage() {
           </div>
 
           {message && (
-            <p className={message.type === 'success' ? 'text-sm text-success' : 'text-sm text-destructive'}>{message.text}</p>
+            <p className={message.type === "success" ? "text-sm text-success" : "text-sm text-destructive"}>{message.text}</p>
           )}
 
           <Button onClick={handleSave} disabled={saving} className="gap-1.5">
             <Save className="h-4 w-4" />
-            {saving ? 'Saving...' : 'Save Changes'}
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </Card>

@@ -4,20 +4,12 @@ import type {
   ServerStats,
   DiskMount,
   MetricPoint,
-  AlertEvent,
   ProcessInfo,
   PortInfo,
 } from "@server-monitor/shared";
 import { collectPm2Processes } from "./pm2-collector";
 import { collectSystemProcesses } from "./system-collector";
 import { version as agentVersion } from "../package.json";
-
-// Thresholds
-const CPU_CRITICAL = 85;
-const CPU_WARN = 70;
-const MEM_CRITICAL = 90;
-const MEM_WARN = 80;
-const DISK_CRITICAL = 90;
 
 // Collection config
 const HISTORY_SIZE = 60;
@@ -43,7 +35,6 @@ const PHYSICAL_FS_TYPES = new Set([
 export class Collector {
   private history: MetricPoint[] = [];
   private hostname = os.hostname();
-  private activeAlerts = new Set<string>();
   readonly intervalMs: number;
 
   constructor(intervalMs: number) {
@@ -123,14 +114,6 @@ export class Collector {
       .filter((p) => p.localPort > 0)
       .sort((a, b) => a.localPort - b.localPort);
 
-    const alerts = this.generateAlerts(
-      serverId,
-      cpuPct,
-      memPct,
-      diskPct,
-      pm2Processes,
-    );
-
     return {
       serverId,
       intervalMs: this.intervalMs,
@@ -154,111 +137,7 @@ export class Collector {
       processes: allProcesses,
       history: this.history,
       ports,
-      alerts,
+      alerts: [],
     };
-  }
-
-  private generateAlerts(
-    serverId: string,
-    cpuPct: number,
-    memPct: number,
-    diskPct: number,
-    pm2Processes: ProcessInfo[],
-  ): AlertEvent[] {
-    const now = Date.now();
-    const alerts: AlertEvent[] = [];
-    const newActive = new Set<string>();
-
-    if (cpuPct > CPU_CRITICAL) {
-      newActive.add("cpu-critical");
-      if (!this.activeAlerts.has("cpu-critical")) {
-        alerts.push({
-          id: `alert-cpu-${now}`,
-          title: "High CPU Usage",
-          message: `CPU at ${cpuPct}% on ${serverId}`,
-          severity: "critical",
-          timestamp: now,
-          source: "cpu.monitor",
-          acknowledged: false,
-        });
-      }
-    } else if (cpuPct > CPU_WARN) {
-      newActive.add("cpu-warn");
-      if (!this.activeAlerts.has("cpu-warn")) {
-        alerts.push({
-          id: `alert-cpu-warn-${now}`,
-          title: "High CPU Usage",
-          message: `CPU at ${cpuPct}% on ${serverId}`,
-          severity: "warning",
-          timestamp: now,
-          source: "cpu.monitor",
-          acknowledged: false,
-        });
-      }
-    }
-
-    if (memPct > MEM_CRITICAL) {
-      newActive.add("mem-critical");
-      if (!this.activeAlerts.has("mem-critical")) {
-        alerts.push({
-          id: `alert-mem-${now}`,
-          title: "Memory Pressure",
-          message: `Memory at ${memPct}% on ${serverId}`,
-          severity: "critical",
-          timestamp: now,
-          source: "memory.monitor",
-          acknowledged: false,
-        });
-      }
-    } else if (memPct > MEM_WARN) {
-      newActive.add("mem-warn");
-      if (!this.activeAlerts.has("mem-warn")) {
-        alerts.push({
-          id: `alert-mem-warn-${now}`,
-          title: "Memory Pressure",
-          message: `Memory at ${memPct}% on ${serverId}`,
-          severity: "warning",
-          timestamp: now,
-          source: "memory.monitor",
-          acknowledged: false,
-        });
-      }
-    }
-
-    if (diskPct > DISK_CRITICAL) {
-      newActive.add("disk-critical");
-      if (!this.activeAlerts.has("disk-critical")) {
-        alerts.push({
-          id: `alert-disk-${now}`,
-          title: "Disk Almost Full",
-          message: `Disk at ${diskPct}% on ${serverId}`,
-          severity: "critical",
-          timestamp: now,
-          source: "disk.monitor",
-          acknowledged: false,
-        });
-      }
-    }
-
-    for (const proc of pm2Processes) {
-      if (proc.status === "errored") {
-        const key = `proc-errored-${proc.id}`;
-        newActive.add(key);
-        if (!this.activeAlerts.has(key)) {
-          alerts.push({
-            id: `alert-proc-${proc.id}-${now}`,
-            title: "Process Errored",
-            message: `Process '${proc.name}' errored on ${serverId}`,
-            severity: "critical",
-            timestamp: now,
-            source: "pm2.monitor",
-            acknowledged: false,
-          });
-        }
-      }
-    }
-
-    this.activeAlerts = newActive;
-    return alerts;
   }
 }

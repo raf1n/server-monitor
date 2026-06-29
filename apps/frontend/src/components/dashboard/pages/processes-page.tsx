@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   AlertCircle,
@@ -11,6 +11,10 @@ import {
   Workflow,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAppSelector } from "@/store";
+import { selectSelectedId } from "@/features/servers/serversSelectors";
+import { selectSettings } from "@/features/settings/settingsSelectors";
+import { selectStats, selectStatsLoading } from "@/features/stats/statsSelectors";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,7 +28,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api } from "@/lib/api";
-import { useSelectedId, useSettings, useStats, useStatsLoading } from "@/store";
 import type { ProcessInfo } from "@/lib/types";
 
 type SortKey = "name" | "status" | "cpu" | "memory" | "uptime" | "restarts";
@@ -78,10 +81,10 @@ function cpuColor(cpu: number): string {
 }
 
 export function ProcessesPage() {
-  const stats = useStats();
-  const loading = useStatsLoading();
-  const serverId = useSelectedId();
-  const settings = useSettings();
+  const stats = useAppSelector(selectStats);
+  const loading = useAppSelector(selectStatsLoading);
+  const serverId = useAppSelector(selectSelectedId);
+  const settings = useAppSelector(selectSettings);
   const compactMode = settings.compactMode;
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("cpu");

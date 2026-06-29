@@ -5,11 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
-} from "typeorm";
+} from 'typeorm';
 
-@Entity("api_keys")
+@Entity('api_keys')
 export class ApiKeyEntity {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id!: string;
 
   @Column()
@@ -28,12 +28,12 @@ export class ApiKeyEntity {
   @Column({ default: false })
   revoked!: boolean;
 
-  @Column({ type: "timestamptz", nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   lastUsedAt?: Date;
 
-  @CreateDateColumn({ type: "timestamptz" })
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 
-  @UpdateDateColumn({ type: "timestamptz" })
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
 }

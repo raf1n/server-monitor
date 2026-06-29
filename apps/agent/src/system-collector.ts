@@ -38,9 +38,7 @@ function parsePsOutput(stdout: string): PsEntry[] {
  *
  * We use systeminformation on Linux to get real-time per-process CPU from /proc.
  */
-async function resolveCpuEntries(
-  entries: PsEntry[],
-): Promise<PsEntry[]> {
+async function resolveCpuEntries(entries: PsEntry[]): Promise<PsEntry[]> {
   if (IS_MACOS) return entries; // ps %cpu is already real-time
 
   try {

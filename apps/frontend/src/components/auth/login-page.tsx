@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Activity, Eye, EyeOff, LogIn } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState } from "react";
+import { Activity, Eye, EyeOff, LogIn } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface LoginPageProps {
   onLogin: (username: string, password: string) => Promise<void>;
@@ -10,8 +10,8 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ onLogin, error: externalError }: LoginPageProps) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -21,7 +21,7 @@ export function LoginPage({ onLogin, error: externalError }: LoginPageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !password) {
-      setLocalError('Username and password are required');
+      setLocalError("Username and password are required");
       return;
     }
     setLoading(true);
@@ -64,7 +64,7 @@ export function LoginPage({ onLogin, error: externalError }: LoginPageProps) {
             <div className="relative">
               <Input
                 id="password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
@@ -90,7 +90,7 @@ export function LoginPage({ onLogin, error: externalError }: LoginPageProps) {
 
           <Button type="submit" className="w-full gap-2" disabled={loading}>
             <LogIn className="h-4 w-4" />
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? "Signing in..." : "Sign in"}
           </Button>
         </form>
       </div>

@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Key, Plus, Copy, Trash2, ShieldOff, Check, AlertTriangle, Clock, Server } from 'lucide-react';
-import { api } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { useState, useEffect, useCallback } from "react";
+import { Key, Plus, Copy, Trash2, ShieldOff, Check, AlertTriangle, Clock, Server } from "lucide-react";
+import { api } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 
 interface ApiKey {
   id: string;
@@ -19,15 +19,15 @@ interface ApiKey {
 }
 
 function formatDate(ts: string): string {
-  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 export function ApiKeysPage() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
-  const [newKeyLabel, setNewKeyLabel] = useState('');
-  const [newKeyServerId, setNewKeyServerId] = useState('');
+  const [newKeyLabel, setNewKeyLabel] = useState("");
+  const [newKeyServerId, setNewKeyServerId] = useState("");
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -37,7 +37,7 @@ export function ApiKeysPage() {
       const data = await api.apiKeys.list();
       setKeys(data);
     } catch (err) {
-      console.warn('Failed to fetch API keys:', err);
+      console.warn("Failed to fetch API keys:", err);
     } finally {
       setLoading(false);
     }
@@ -53,11 +53,11 @@ export function ApiKeysPage() {
         serverId: newKeyServerId || undefined,
       });
       setGeneratedKey(result.key);
-      setNewKeyLabel('');
-      setNewKeyServerId('');
+      setNewKeyLabel("");
+      setNewKeyServerId("");
       fetchKeys();
     } catch (err) {
-      console.error('Failed to create key:', err);
+      console.error("Failed to create key:", err);
     } finally {
       setCreating(false);
     }
@@ -75,7 +75,7 @@ export function ApiKeysPage() {
       await api.apiKeys.revoke(id);
       fetchKeys();
     } catch (err) {
-      console.error('Failed to revoke key:', err);
+      console.error("Failed to revoke key:", err);
     }
   };
 
@@ -84,7 +84,7 @@ export function ApiKeysPage() {
       await api.apiKeys.delete(id);
       fetchKeys();
     } catch (err) {
-      console.error('Failed to delete key:', err);
+      console.error("Failed to delete key:", err);
     }
   };
 
@@ -163,10 +163,10 @@ export function ApiKeysPage() {
       ) : (
         <div className="space-y-2">
           {keys.map((key) => (
-            <Card key={key.id} className={`p-4 ${key.revoked ? 'opacity-60' : ''}`}>
+            <Card key={key.id} className={`p-4 ${key.revoked ? "opacity-60" : ""}`}>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${key.revoked ? 'bg-muted text-muted-foreground' : 'bg-primary/15 text-primary'}`}>
+                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${key.revoked ? "bg-muted text-muted-foreground" : "bg-primary/15 text-primary"}`}>
                     <Key className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
@@ -250,7 +250,7 @@ export function ApiKeysPage() {
               <DialogFooter>
                 <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
                 <Button onClick={handleCreate} disabled={creating}>
-                  {creating ? 'Creating...' : 'Generate Key'}
+                  {creating ? "Creating..." : "Generate Key"}
                 </Button>
               </DialogFooter>
             </>

@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
 import { MetricsProcessor } from './metrics.processor';
+import { MetricSnapshotEntity } from '../database/entities/metric-snapshot.entity';
 import { AlertsModule } from '../alerts/alerts.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 
@@ -21,6 +23,7 @@ export const INGEST_QUEUE = 'metrics-ingest';
       },
     }),
     BullModule.registerQueue({ name: INGEST_QUEUE }),
+    TypeOrmModule.forFeature([MetricSnapshotEntity]),
     AlertsModule,
     NotificationsModule,
   ],

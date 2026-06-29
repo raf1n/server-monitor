@@ -22,7 +22,9 @@ import * as Joi from 'joi';
         AGENT_API_KEY: Joi.string().optional(),
         CORS_ORIGIN: Joi.string().default('http://localhost:5173'),
         PORT: Joi.number().default(3300),
-        NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
+        NODE_ENV: Joi.string()
+          .valid('development', 'production', 'test')
+          .default('development'),
         METRICS_RETENTION_DAYS: Joi.number().default(7),
         ALLOW_REGISTRATION: Joi.boolean().default(false),
         ADMIN_USERNAME: Joi.string().default('admin'),

@@ -26,7 +26,8 @@ export class IngestController {
   @Post()
   @HttpCode(HttpStatus.ACCEPTED)
   async ingest(
-    @Body(new ValidationPipe({ whitelist: false, transform: true })) data: Record<string, unknown>,
+    @Body(new ValidationPipe({ whitelist: false, transform: true }))
+    data: Record<string, unknown>,
     @Headers('x-api-key') apiKey: string,
   ) {
     const serialized = JSON.stringify(data);

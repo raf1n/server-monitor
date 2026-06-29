@@ -22,11 +22,36 @@ export class ServersService implements OnModuleDestroy {
   private dbOk = true;
 
   private staticServers = [
-    { id: 'srv-prod-01', name: 'prod-web-01', host: '10.0.1.24', region: 'us-east-1' },
-    { id: 'srv-prod-02', name: 'prod-api-02', host: '10.0.1.25', region: 'us-east-1' },
-    { id: 'srv-stage-01', name: 'stage-worker-01', host: '10.0.2.10', region: 'us-west-2' },
-    { id: 'srv-db-01', name: 'db-primary-01', host: '10.0.3.5', region: 'us-east-1' },
-    { id: 'srv-edge-01', name: 'edge-cdn-01', host: '10.0.4.2', region: 'eu-west-1' },
+    {
+      id: 'srv-prod-01',
+      name: 'prod-web-01',
+      host: '10.0.1.24',
+      region: 'us-east-1',
+    },
+    {
+      id: 'srv-prod-02',
+      name: 'prod-api-02',
+      host: '10.0.1.25',
+      region: 'us-east-1',
+    },
+    {
+      id: 'srv-stage-01',
+      name: 'stage-worker-01',
+      host: '10.0.2.10',
+      region: 'us-west-2',
+    },
+    {
+      id: 'srv-db-01',
+      name: 'db-primary-01',
+      host: '10.0.3.5',
+      region: 'us-east-1',
+    },
+    {
+      id: 'srv-edge-01',
+      name: 'edge-cdn-01',
+      host: '10.0.4.2',
+      region: 'eu-west-1',
+    },
   ];
 
   constructor(
@@ -43,7 +68,13 @@ export class ServersService implements OnModuleDestroy {
     clearInterval(this.staleInterval);
   }
 
-  async register(id: string, host?: string, name?: string, intervalMs?: number, agentVersion?: string) {
+  async register(
+    id: string,
+    host?: string,
+    name?: string,
+    intervalMs?: number,
+    agentVersion?: string,
+  ) {
     this.memory.set(id, {
       id,
       name: name || id,
@@ -94,7 +125,9 @@ export class ServersService implements OnModuleDestroy {
   async getAll() {
     if (this.dbOk) {
       try {
-        const dbServers = await this.serverRepo.find({ order: { name: 'ASC' } });
+        const dbServers = await this.serverRepo.find({
+          order: { name: 'ASC' },
+        });
         if (dbServers.length > 0) return dbServers;
       } catch {
         this.dbOk = false;
@@ -102,12 +135,27 @@ export class ServersService implements OnModuleDestroy {
     }
 
     const now = Date.now();
-    const merged = new Map<string, { id: string; name: string; host: string; region: string; status: 'online' | 'offline' | 'degraded'; agentIntervalMs?: number; agentVersion?: string }>();
+    const merged = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        host: string;
+        region: string;
+        status: 'online' | 'offline' | 'degraded';
+        agentIntervalMs?: number;
+        agentVersion?: string;
+      }
+    >();
     for (const s of this.staticServers) {
       const dyn = this.memory.get(s.id);
       merged.set(s.id, {
         ...s,
-        status: dyn ? (now - dyn.lastSeen > 30_000 ? 'offline' : dyn.status) : 'offline' as const,
+        status: dyn
+          ? now - dyn.lastSeen > 30_000
+            ? 'offline'
+            : dyn.status
+          : ('offline' as const),
         agentIntervalMs: dyn?.intervalMs,
         agentVersion: dyn?.agentVersion,
       });
@@ -115,8 +163,14 @@ export class ServersService implements OnModuleDestroy {
     for (const s of this.memory.values()) {
       if (!merged.has(s.id)) {
         merged.set(s.id, {
-          id: s.id, name: s.name, host: s.host, region: s.region,
-          status: (now - s.lastSeen > 30_000 ? 'offline' : s.status) as 'online' | 'offline' | 'degraded',
+          id: s.id,
+          name: s.name,
+          host: s.host,
+          region: s.region,
+          status: (now - s.lastSeen > 30_000 ? 'offline' : s.status) as
+            | 'online'
+            | 'offline'
+            | 'degraded',
           agentIntervalMs: s.intervalMs,
           agentVersion: s.agentVersion,
         });

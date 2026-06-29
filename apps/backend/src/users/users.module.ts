@@ -27,7 +27,9 @@ export class UsersModule implements OnModuleInit {
       const username = process.env.ADMIN_USERNAME || 'admin';
       const password = process.env.ADMIN_PASSWORD;
       if (!password) {
-        this.logger.error('ADMIN_PASSWORD environment variable is required when no users exist.');
+        this.logger.error(
+          'ADMIN_PASSWORD environment variable is required when no users exist.',
+        );
         throw new Error('ADMIN_PASSWORD is required');
       }
       const hash = await bcrypt.hash(password, 10);
@@ -35,13 +37,20 @@ export class UsersModule implements OnModuleInit {
       this.logger.log(`Default admin user created: ${username}`);
     } else {
       // Ensure at least one admin exists (for existing databases migrating to roles)
-      const adminCount = await this.userRepo.count({ where: { role: 'admin' as any } });
+      const adminCount = await this.userRepo.count({
+        where: { role: 'admin' as any },
+      });
       if (adminCount === 0) {
-        const firstUser = await this.userRepo.findOne({ where: {}, order: { createdAt: 'ASC' } });
+        const firstUser = await this.userRepo.findOne({
+          where: {},
+          order: { createdAt: 'ASC' },
+        });
         if (firstUser) {
           firstUser.role = 'admin';
           await this.userRepo.save(firstUser);
-          this.logger.log(`Promoted existing user to admin: ${firstUser.username}`);
+          this.logger.log(
+            `Promoted existing user to admin: ${firstUser.username}`,
+          );
         }
       }
     }

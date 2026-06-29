@@ -7,19 +7,17 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  useSelectedId,
-  useSettings,
-  useStats,
-  useStatsLoading,
-} from "@/store";
+import { useAppSelector } from "@/store";
+import { selectSelectedId } from "@/features/servers/serversSelectors";
+import { selectSettings } from "@/features/settings/settingsSelectors";
+import { selectStats, selectStatsLoading } from "@/features/stats/statsSelectors";
 import { PortsTable } from "@/components/dashboard/ports-table";
 
 export function PortsPage() {
-  const stats = useStats();
-  const loading = useStatsLoading();
-  const serverId = useSelectedId();
-  const settings = useSettings();
+  const stats = useAppSelector(selectStats);
+  const loading = useAppSelector(selectStatsLoading);
+  const serverId = useAppSelector(selectSelectedId);
+  const settings = useAppSelector(selectSettings);
   const compactMode = settings.compactMode;
 
   const ports = stats?.ports ?? [];

@@ -1,5 +1,5 @@
 
-import { useMemo } from 'react';
+import { useMemo } from "react";
 import {
   Area,
   AreaChart,
@@ -12,30 +12,30 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-} from 'recharts';
-import type { MetricPoint, DiskMount, TimeRange } from '@/lib/types';
+} from "recharts";
+import type { MetricPoint, DiskMount, TimeRange } from "@/lib/types";
 
-const GRID_COLOR = 'hsl(var(--border))';
-const AXIS_COLOR = 'hsl(var(--muted-foreground))';
+const GRID_COLOR = "hsl(var(--border))";
+const AXIS_COLOR = "hsl(var(--muted-foreground))";
 
 function formatAxisTime(ts: number, timeRange: TimeRange): string {
   const d = new Date(ts);
-  if (timeRange === '24h') {
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+  if (timeRange === "24h") {
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
   }
-  if (timeRange === '5m') {
-    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  if (timeRange === "5m") {
+    return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
   }
-  return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
 function formatTooltipTime(ts: number): string {
-  return new Date(ts).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+  return new Date(ts).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
     hour12: false,
   });
 }
@@ -47,7 +47,7 @@ interface ChartTooltipProps {
   unit?: string;
 }
 
-function ChartTooltip({ active, payload, label, unit = '' }: ChartTooltipProps) {
+function ChartTooltip({ active, payload, label, unit = "" }: ChartTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
   return (
     <div className="rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-lg">
@@ -77,14 +77,14 @@ interface TimeSeriesChartProps {
 }
 
 const CHART_LABELS: Partial<Record<string, string>> = {
-  cpu: 'CPU',
-  memory: 'Memory',
-  disk: 'Disk',
+  cpu: "CPU",
+  memory: "Memory",
+  disk: "Disk",
 };
 
-export function TimeSeriesChart({ data, dataKey, color, unit = '%', height = 220, timeRange, animate = false }: TimeSeriesChartProps) {
+export function TimeSeriesChart({ data, dataKey, color, unit = "%", height = 220, timeRange, animate = false }: TimeSeriesChartProps) {
   const gradientId = useMemo(
-    () => `grad-${dataKey}-${color.replace(/[^a-z0-9]/gi, '')}`,
+    () => `grad-${dataKey}-${color.replace(/[^a-z0-9]/gi, "")}`,
     [dataKey, color]
   );
 
@@ -106,7 +106,7 @@ export function TimeSeriesChart({ data, dataKey, color, unit = '%', height = 220
           tickLine={false}
           axisLine={false}
           minTickGap={40}
-          tickCount={timeRange === '5m' ? 6 : timeRange === '1h' ? 8 : 8}
+          tickCount={timeRange === "5m" ? 6 : timeRange === "1h" ? 8 : 8}
         />
         <YAxis
           stroke={AXIS_COLOR}
@@ -151,7 +151,7 @@ export function NetworkChart({ data, height = 220, timeRange, animate = false }:
           tickLine={false}
           axisLine={false}
           minTickGap={40}
-          tickCount={timeRange === '5m' ? 6 : timeRange === '1h' ? 8 : 8}
+          tickCount={timeRange === "5m" ? 6 : timeRange === "1h" ? 8 : 8}
         />
         <YAxis
           stroke={AXIS_COLOR}
@@ -212,7 +212,7 @@ export function DiskBarChart({ data, height = 220, animate = false }: DiskBarCha
           domain={[0, 100]}
           width={40}
         />
-        <Tooltip content={<ChartTooltip unit="%" />} cursor={{ fill: 'hsl(var(--accent) / 0.4)' }} />
+        <Tooltip content={<ChartTooltip unit="%" />} cursor={{ fill: "hsl(var(--accent) / 0.4)" }} />
         <Bar
           dataKey="used"
           name="Used"

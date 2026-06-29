@@ -1,4 +1,12 @@
-import { Controller, Get, Put, Body, Query, Logger, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Body,
+  Query,
+  Logger,
+  UseGuards,
+} from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { UpdateSettingDto, UpdateSettingsBulkDto } from '../dtos/settings.dto';
 import { Roles } from '../auth/roles.decorator';

@@ -1,15 +1,9 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  Index,
-  CreateDateColumn,
-} from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, Index, CreateDateColumn } from 'typeorm';
 
-@Entity("alerts")
-@Index(["serverId", "timestamp"])
+@Entity('alerts')
+@Index(['serverId', 'timestamp'])
 export class AlertEntity {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id!: string;
 
   @Column()
@@ -19,13 +13,13 @@ export class AlertEntity {
   @Column()
   title!: string;
 
-  @Column("text")
+  @Column('text')
   message!: string;
 
   @Column()
   severity!: string;
 
-  @Column({ default: "agent" })
+  @Column({ default: 'agent' })
   source!: string;
 
   @Column({ nullable: true })
@@ -35,9 +29,9 @@ export class AlertEntity {
   @Column({ default: false })
   acknowledged!: boolean;
 
-  @Column({ type: "timestamptz" })
+  @Column({ type: 'timestamptz' })
   timestamp!: Date;
 
-  @CreateDateColumn({ type: "timestamptz" })
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 }

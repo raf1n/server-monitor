@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Req,
-  Res,
-  Header,
-  Logger,
-} from '@nestjs/common';
+import { Controller, Get, Req, Res, Header, Logger } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
@@ -19,8 +12,7 @@ export class AgentDistributionController {
 
   constructor() {
     this.agentDistDir =
-      process.env.AGENT_DIST_DIR ||
-      join(__dirname, '..', '..', '..', 'agent', 'dist');
+      process.env.AGENT_DIST_DIR || join(__dirname, '..', '..', '..', 'agent', 'dist');
   }
 
   @Get('agent.js')

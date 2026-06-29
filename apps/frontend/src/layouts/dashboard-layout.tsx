@@ -1,71 +1,78 @@
-import { useEffect, useRef, useState } from 'react';
-import { Outlet, Navigate, useSearchParams } from 'react-router-dom';
-import { Sidebar } from '@/components/dashboard/sidebar';
-import { Topbar } from '@/components/dashboard/topbar';
-import {
-  useStore,
-  useIsAuthenticated,
-  useAuthLoading,
-  useInitApp,
-  useAlerts,
-  useSettings,
-} from '@/store';
-import type { TimeRange } from '@/lib/types';
+import { useEffect, useRef, useState } from "react";
+import { Outlet, Navigate, useSearchParams } from "react-router-dom";
+import { Sidebar } from "@/components/dashboard/sidebar";
+import { Topbar } from "@/components/dashboard/topbar";
+import { useAppSelector, useAppDispatch, store } from "@/store";
+import { selectSelectedId, selectTimeRange, selectServers } from "@/features/servers/serversSelectors";
+import { selectServer, setTimeRange } from "@/features/servers/serversSlice";
+import { selectIsAuthenticated, selectAuthLoading } from "@/features/auth/authSelectors";
+import { useGetMeQuery } from "@/features/auth/authApi";
+import { selectAlerts } from "@/features/alerts/alertsSelectors";
+import { selectSettings } from "@/features/settings/settingsSelectors";
+import { connectSocket } from "@/features/socket/socketActions";
+import type { TimeRange } from "@/lib/types";
 
 const API_HOST: string | undefined = import.meta.env.VITE_API_URL;
 
 export default function DashboardLayout() {
-  const isAuthenticated = useIsAuthenticated();
-  const authLoading = useAuthLoading();
-  const alerts = useAlerts();
-  const settings = useSettings();
-  const initApp = useInitApp();
+  const dispatch = useAppDispatch();
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const authLoading = useAppSelector(selectAuthLoading);
+  const alerts = useAppSelector(selectAlerts);
+  const settings = useAppSelector(selectSettings);
+  const servers = useAppSelector(selectServers);
+  const selectedId = useAppSelector(selectSelectedId);
+  const timeRange = useAppSelector(selectTimeRange);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const initRef = useRef(false);
 
-  // URL params ↔ store sync
+  useGetMeQuery();
+
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // On mount: read URL params into store, then init everything
   useEffect(() => {
     if (initRef.current) return;
+    if (API_HOST && servers.length === 0) return;
     initRef.current = true;
 
-    const urlServer = searchParams.get('server') || '';
-    const urlRange = (searchParams.get('range') as TimeRange) || '5m';
-    const state = useStore.getState();
-    if (urlServer) state.selectServer(urlServer);
-    if (urlRange && urlRange !== '5m') state.setTimeRange(urlRange);
+    const urlServer = searchParams.get("server") || servers[0]?.id || selectedId || "";
+    const urlRange = (searchParams.get("range") as TimeRange) || timeRange || "5m";
 
-    initApp();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (urlServer && urlServer !== selectedId) {
+      dispatch(selectServer(urlServer));
+    }
+    if (urlRange && urlRange !== timeRange) {
+      dispatch(setTimeRange(urlRange));
+    }
 
-  // Keep URL in sync with store (replace, don't push)
+    dispatch(connectSocket());
+  }, [servers, dispatch, searchParams, selectedId, timeRange, API_HOST]);
+
   useEffect(() => {
-    return useStore.subscribe((state) => {
+    const unsubscribe = store.subscribe(() => {
+      const state = store.getState();
       const p = new URLSearchParams();
-      p.set('server', state.selectedId);
-      p.set('range', state.timeRange);
+      p.set("server", state.servers.selectedId);
+      p.set("range", state.servers.timeRange);
       setSearchParams(p, { replace: true });
     });
+    return unsubscribe;
   }, [setSearchParams]);
 
-  // Alert sound + push notifications
   const audioCtxRef = useRef<AudioContext | null>(null);
   const prevCriticalIds = useRef(new Set<string>());
 
   useEffect(() => {
     const handler = () => {
-      if (audioCtxRef.current?.state === 'suspended') audioCtxRef.current.resume();
+      if (audioCtxRef.current?.state === "suspended") audioCtxRef.current.resume();
     };
-    document.addEventListener('click', handler, { once: true });
-    return () => document.removeEventListener('click', handler);
+    document.addEventListener("click", handler, { once: true });
+    return () => document.removeEventListener("click", handler);
   }, []);
 
   useEffect(() => {
     const newCritical = alerts.filter(
-      (a) => a.severity === 'critical' && !prevCriticalIds.current.has(a.id),
+      (a) => a.severity === "critical" && !prevCriticalIds.current.has(a.id),
     );
     for (const alert of newCritical) {
       prevCriticalIds.current.add(alert.id);
@@ -73,7 +80,7 @@ export default function DashboardLayout() {
         try {
           if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
           const ctx = audioCtxRef.current;
-          if (ctx.state !== 'suspended') {
+          if (ctx.state !== "suspended") {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
             osc.frequency.value = 880;
@@ -84,26 +91,25 @@ export default function DashboardLayout() {
             osc.stop(ctx.currentTime + 0.3);
           }
         } catch (err) {
-          console.warn('Failed to play alert sound:', err);
+          console.warn("Failed to play alert sound:", err);
         }
       }
-      if (settings.notifications && typeof Notification !== 'undefined') {
-        if (Notification.permission === 'granted') {
-          new Notification('Critical Alert', { body: alert.message, tag: alert.id });
-        } else if (Notification.permission === 'default') {
+      if (settings.notifications && typeof Notification !== "undefined") {
+        if (Notification.permission === "granted") {
+          new Notification("Critical Alert", { body: alert.message, tag: alert.id });
+        } else if (Notification.permission === "default") {
           Notification.requestPermission()
             .then((perm) => {
-              if (perm === 'granted') {
-                new Notification('Critical Alert', { body: alert.message, tag: alert.id });
+              if (perm === "granted") {
+                new Notification("Critical Alert", { body: alert.message, tag: alert.id });
               }
             })
-            .catch((err) => console.warn('Notification permission request failed:', err));
+            .catch((err) => console.warn("Notification permission request failed:", err));
         }
       }
     }
   }, [alerts, settings.soundEnabled, settings.notifications]);
 
-  // Auth guard — AFTER all hooks
   const isLive = API_HOST !== undefined;
   if (isLive && authLoading) {
     return (

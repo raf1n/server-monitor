@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -20,7 +20,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('ErrorBoundary caught:', error, info);
+    console.error("ErrorBoundary caught:", error, info);
   }
 
   render() {
@@ -30,7 +30,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
           <div className="max-w-md text-center">
             <h1 className="mb-2 text-xl font-semibold text-foreground">Something went wrong</h1>
             <p className="mb-4 text-sm text-muted-foreground">
-              {this.state.error?.message || 'An unexpected error occurred'}
+              {this.state.error?.message || "An unexpected error occurred"}
             </p>
             <button
               onClick={() => window.location.reload()}

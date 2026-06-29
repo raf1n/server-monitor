@@ -4,13 +4,13 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-} from "typeorm";
+} from 'typeorm';
 
-export type UserRole = "admin" | "viewer";
+export type UserRole = 'admin' | 'viewer';
 
-@Entity("users")
+@Entity('users')
 export class UserEntity {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id!: string;
 
   @Column({ unique: true })
@@ -19,15 +19,15 @@ export class UserEntity {
   @Column()
   password!: string;
 
-  @Column({ type: "varchar", default: "viewer" })
+  @Column({ type: 'varchar', default: 'viewer' })
   role!: UserRole;
 
   @Column({ nullable: true })
   email?: string;
 
-  @CreateDateColumn({ type: "timestamptz" })
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 
-  @UpdateDateColumn({ type: "timestamptz" })
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
 }

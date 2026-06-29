@@ -1,12 +1,6 @@
-import {
-  Entity,
-  PrimaryColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from "typeorm";
+import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
-@Entity("servers")
+@Entity('servers')
 export class ServerEntity {
   @PrimaryColumn()
   id!: string;
@@ -17,24 +11,24 @@ export class ServerEntity {
   @Column()
   host!: string;
 
-  @Column({ default: "dynamic" })
+  @Column({ default: 'dynamic' })
   region!: string;
 
-  @Column({ default: "online" })
+  @Column({ default: 'online' })
   status!: string;
 
-  @Column({ type: "int", nullable: true })
+  @Column({ type: 'int', nullable: true })
   intervalMs?: number;
 
   @Column({ nullable: true })
   agentVersion?: string;
 
-  @Column({ type: "timestamptz", nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   lastSeen!: Date;
 
-  @CreateDateColumn({ type: "timestamptz" })
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 
-  @UpdateDateColumn({ type: "timestamptz" })
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
 }

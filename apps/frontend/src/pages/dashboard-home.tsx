@@ -1,44 +1,59 @@
 import { useMemo } from "react";
 import { Activity, Cpu, HardDrive, MemoryStick } from "lucide-react";
+import { useAppSelector } from "@/store";
+import { useGetServersQuery } from "@/features/servers/serversApi";
+import { useGetStatsHistoryQuery, useGetLatestStatsQuery } from "@/features/stats/statsApi";
+import { useGetThresholdsQuery } from "@/features/alerts/alertsApi";
+import {
+  selectSelectedId,
+  selectTimeRange,
+  selectServers,
+} from "@/features/servers/serversSelectors";
+import { selectSettings } from "@/features/settings/settingsSelectors";
+import {
+  selectStats,
+  selectChartHistory,
+  selectStatsLoading,
+} from "@/features/stats/statsSelectors";
+import { selectAlerts } from "@/features/alerts/alertsSelectors";
 import { AlertList } from "@/components/dashboard/alert-list";
 import { ChartCard } from "@/components/dashboard/chart-card";
-import {
-  DiskBarChart,
-  NetworkChart,
-  TimeSeriesChart,
-} from "@/components/dashboard/charts";
+import { DiskBarChart, NetworkChart, TimeSeriesChart } from "@/components/dashboard/charts";
 import { ProcessTable } from "@/components/dashboard/process-table";
 import { PortsTable } from "@/components/dashboard/ports-table";
 import { StatCard, statusFromValue } from "@/components/dashboard/stat-card";
-import {
-  useServers,
-  useSelectedId,
-  useTimeRange,
-  useSettings,
-  useStats,
-  useStatsLoading,
-  useChartHistory,
-} from "@/store";
-import { TIME_RANGE_POINTS, HISTORY_BUFFER } from "@/lib/types";
+import { TIME_RANGE_POINTS } from "@/lib/types";
 
 export function DashboardHome() {
-  const stats = useStats();
-  const loading = useStatsLoading();
-  const chartHistory = useChartHistory();
-  const servers = useServers();
-  const serverId = useSelectedId();
-  const timeRange = useTimeRange();
-  const settings = useSettings();
+  const stats = useAppSelector(selectStats);
+  const loading = useAppSelector(selectStatsLoading);
+  const chartHistory = useAppSelector(selectChartHistory);
+  const serverId = useAppSelector(selectSelectedId);
+  const timeRange = useAppSelector(selectTimeRange);
+  const settings = useAppSelector(selectSettings);
+  const servers = useAppSelector(selectServers);
+  const apiAlerts = useAppSelector(selectAlerts);
+
+  const { data: apiServers = [] } = useGetServersQuery(undefined, {
+    skip: !import.meta.env.VITE_API_URL,
+  });
+  const allServers = servers.length > 0 ? servers : apiServers;
+
+  const isLive = !!import.meta.env.VITE_API_URL;
+  useGetStatsHistoryQuery(
+    { serverId: serverId!, range: timeRange },
+    { skip: !isLive || !serverId },
+  );
+  useGetLatestStatsQuery({ serverId: serverId! }, { skip: !isLive || !serverId });
+
+  const { data: thresholds } = useGetThresholdsQuery(undefined, {
+    skip: !isLive,
+  });
 
   const history = useMemo(() => {
     const now = Date.now();
-    const rangeMs =
-      timeRange === "5m"
-        ? 300_000
-        : timeRange === "1h"
-          ? 3_600_000
-          : 86_400_000;
-    const server = servers.find((s) => s.id === serverId);
+    const rangeMs = timeRange === "5m" ? 300_000 : timeRange === "1h" ? 3_600_000 : 86_400_000;
+    const server = allServers.find((s) => s.id === serverId);
     let max = TIME_RANGE_POINTS[timeRange];
     if (server?.agentIntervalMs && server.agentIntervalMs > 0) {
       const expected = Math.floor(rangeMs / server.agentIntervalMs);
@@ -48,36 +63,50 @@ export function DashboardHome() {
     if (inRange.length <= max) return inRange;
     const step = inRange.length / max;
     return Array.from({ length: max }, (_, i) => inRange[Math.floor(i * step)]);
-  }, [chartHistory, timeRange, servers, serverId]);
+  }, [chartHistory, timeRange, allServers, serverId]);
 
-  const cpuData = useMemo(
-    () => history.map((p) => ({ value: p.cpu })),
-    [history],
-  );
-  const memData = useMemo(
-    () => history.map((p) => ({ value: p.memory })),
-    [history],
-  );
-  const diskData = useMemo(
-    () => history.map((p) => ({ value: p.disk })),
-    [history],
-  );
+  const cpuData = useMemo(() => history.map((p) => ({ value: p.cpu })), [history]);
+  const memData = useMemo(() => history.map((p) => ({ value: p.memory })), [history]);
+  const diskData = useMemo(() => history.map((p) => ({ value: p.disk })), [history]);
   const procData = useMemo(
     () => history.map(() => ({ value: stats?.activeProcesses ?? 0 })),
     [history, stats],
   );
 
-  const threshold = Number(settings.criticalThreshold) || 85;
-  const warningAt = Math.max(threshold - 5, 50);
-  const cpuStatus = stats
-    ? statusFromValue(stats.cpu, [warningAt, threshold])
-    : "good";
-  const memStatus = stats
-    ? statusFromValue(stats.memory, [warningAt, threshold])
-    : "good";
-  const diskStatus = stats
-    ? statusFromValue(stats.disk, [warningAt + 5, threshold + 5])
-    : "good";
+  const thresholdConfig = useMemo(() => {
+    if (thresholds) {
+      return {
+        cpu: [thresholds.cpuWarn, thresholds.cpuCritical] as [number, number],
+        mem: [thresholds.memWarn, thresholds.memCritical] as [number, number],
+        disk: [thresholds.diskCritical, thresholds.diskCritical] as [number, number],
+      };
+    }
+    return {
+      cpu: [
+        Number(settings.cpuWarnThreshold) || 70,
+        Number(settings.cpuCriticalThreshold) || 85,
+      ] as [number, number],
+      mem: [
+        Number(settings.memWarnThreshold) || 80,
+        Number(settings.memCriticalThreshold) || 90,
+      ] as [number, number],
+      disk: [
+        Number(settings.diskCriticalThreshold) || 90,
+        Number(settings.diskCriticalThreshold) || 90,
+      ] as [number, number],
+    };
+  }, [
+    thresholds,
+    settings.cpuCriticalThreshold,
+    settings.cpuWarnThreshold,
+    settings.memCriticalThreshold,
+    settings.memWarnThreshold,
+    settings.diskCriticalThreshold,
+  ]);
+
+  const cpuStatus = stats ? statusFromValue(stats.cpu, thresholdConfig.cpu) : "good";
+  const memStatus = stats ? statusFromValue(stats.memory, thresholdConfig.mem) : "good";
+  const diskStatus = stats ? statusFromValue(stats.disk, thresholdConfig.disk) : "good";
   const procStatus: "good" | "warning" | "critical" =
     stats && stats.activeProcesses === 0 ? "warning" : "good";
 
@@ -88,7 +117,7 @@ export function DashboardHome() {
         <p className="text-sm text-muted-foreground">
           Real-time metrics for{" "}
           <span className="font-medium text-foreground">
-            {servers.find((s) => s.id === serverId)?.name}
+            {allServers.find((s) => s.id === serverId)?.name}
           </span>
         </p>
       </div>
@@ -161,21 +190,14 @@ export function DashboardHome() {
           subtitle="Used space by filesystem mount"
           loading={loading}
         >
-          <DiskBarChart
-            data={stats?.mounts ?? []}
-            animate={settings.chartAnimations}
-          />
+          <DiskBarChart data={stats?.mounts ?? []} animate={settings.chartAnimations} />
         </ChartCard>
         <ChartCard
           title="Network Traffic"
           subtitle="Inbound and outbound throughput (KB/s)"
           loading={loading}
         >
-          <NetworkChart
-            data={history}
-            timeRange={timeRange}
-            animate={settings.chartAnimations}
-          />
+          <NetworkChart data={history} timeRange={timeRange} animate={settings.chartAnimations} />
         </ChartCard>
       </div>
 
@@ -184,18 +206,14 @@ export function DashboardHome() {
           <ProcessTable
             processes={stats?.processes ?? []}
             loading={loading}
-            hasServer={servers.length > 0}
+            hasServer={allServers.length > 0}
             compactMode={settings.compactMode}
           />
         </div>
-        <AlertList alerts={stats?.alerts ?? []} loading={loading} />
+        <AlertList alerts={isLive ? apiAlerts : (stats?.alerts ?? [])} loading={loading} />
       </div>
 
-      <PortsTable
-        ports={stats?.ports ?? []}
-        loading={loading}
-        compactMode={settings.compactMode}
-      />
+      <PortsTable ports={stats?.ports ?? []} loading={loading} compactMode={settings.compactMode} />
     </div>
   );
 }

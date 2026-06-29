@@ -11,6 +11,14 @@ export type {
   ServerStats,
 } from "@server-monitor/shared";
 
+export interface Thresholds {
+  cpuCritical: number;
+  cpuWarn: number;
+  memCritical: number;
+  memWarn: number;
+  diskCritical: number;
+}
+
 export type TimeRange = "5m" | "1h" | "24h";
 
 export const TIME_RANGE_LABELS: Record<TimeRange, string> = {

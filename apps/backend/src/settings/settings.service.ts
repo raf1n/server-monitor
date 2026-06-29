@@ -39,14 +39,22 @@ export class SettingsService implements OnModuleDestroy {
     if (entry) this.cache.delete(cacheKey);
 
     try {
-      const setting = await this.settingsRepo.findOne({ where: this.where(key, serverId) });
+      const setting = await this.settingsRepo.findOne({
+        where: this.where(key, serverId),
+      });
+
       const value = setting?.value || null;
       if (value) {
-        this.cache.set(cacheKey, { value, ttl: Date.now() + this.CACHE_TTL_MS });
+        this.cache.set(cacheKey, {
+          value,
+          ttl: Date.now() + this.CACHE_TTL_MS,
+        });
       }
       return value;
     } catch (err) {
-      this.logger.error(`Failed to get setting ${key}: ${(err as Error).message}`);
+      this.logger.error(
+        `Failed to get setting ${key}: ${(err as Error).message}`,
+      );
       return null;
     }
   }
@@ -55,7 +63,9 @@ export class SettingsService implements OnModuleDestroy {
     const cacheKey = this.cacheKey(key, serverId);
 
     try {
-      const existing = await this.settingsRepo.findOne({ where: this.where(key, serverId) });
+      const existing = await this.settingsRepo.findOne({
+        where: this.where(key, serverId),
+      });
 
       if (existing) {
         await this.settingsRepo.update(existing.id, { value });
@@ -65,7 +75,9 @@ export class SettingsService implements OnModuleDestroy {
 
       this.cache.set(cacheKey, { value, ttl: Date.now() + this.CACHE_TTL_MS });
     } catch (err) {
-      this.logger.error(`Failed to save setting ${key}: ${(err as Error).message}`);
+      this.logger.error(
+        `Failed to save setting ${key}: ${(err as Error).message}`,
+      );
     }
   }
 
@@ -79,7 +91,9 @@ export class SettingsService implements OnModuleDestroy {
       }
       return result;
     } catch (err) {
-      this.logger.error(`Failed to get all settings: ${(err as Error).message}`);
+      this.logger.error(
+        `Failed to get all settings: ${(err as Error).message}`,
+      );
       return {};
     }
   }
@@ -90,7 +104,9 @@ export class SettingsService implements OnModuleDestroy {
     try {
       await this.settingsRepo.delete(this.where(key, serverId));
     } catch (err) {
-      this.logger.error(`Failed to delete setting ${key}: ${(err as Error).message}`);
+      this.logger.error(
+        `Failed to delete setting ${key}: ${(err as Error).message}`,
+      );
     }
   }
 

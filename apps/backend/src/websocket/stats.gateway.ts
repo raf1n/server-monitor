@@ -18,18 +18,21 @@ interface JwtPayload {
 }
 
 @WebSocketGateway({
-  cors: { origin: process.env.CORS_ORIGIN || 'http://localhost:5173', credentials: true },
+  cors: {
+    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    credentials: true,
+  },
   transports: ['websocket'],
 })
-export class StatsGateway implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit {
+export class StatsGateway
+  implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
+{
   private readonly logger = new Logger(StatsGateway.name);
 
   @WebSocketServer()
   server!: Server;
 
-  constructor(
-    @Inject(REDIS_SUBSCRIBER) private readonly redisSub: Redis,
-  ) {}
+  constructor(@Inject(REDIS_SUBSCRIBER) private readonly redisSub: Redis) {}
 
   onModuleInit() {
     this.redisSub.psubscribe('stats:*', (err) => {
@@ -40,18 +43,37 @@ export class StatsGateway implements OnGatewayConnection, OnGatewayDisconnect, O
       this.logger.log('Subscribed to stats:* on Redis');
     });
 
-    this.redisSub.on('pmessage', (_pattern: string, channel: string, message: string) => {
-      const serverId = channel.replace('stats:', '');
-      try {
-        const stats = JSON.parse(message);
-        this.server.to(`server:${serverId}`).emit('stats', { serverId, ...stats });
-      } catch {
-        this.logger.error('Failed to parse stats message:', message.slice(0, 100));
-      }
-    });
+    this.redisSub.on(
+      'pmessage',
+      (_pattern: string, channel: string, message: string) => {
+        const serverId = channel.replace('stats:', '');
+        try {
+          const stats = JSON.parse(message);
+          this.server
+            .to(`server:${serverId}`)
+            .emit('stats', { serverId, ...stats });
+        } catch {
+          this.logger.error(
+            'Failed to parse stats message:',
+            message.slice(0, 100),
+          );
+        }
+      },
+    );
   }
 
-  emitAlert(serverId: string, alert: { id: string; title: string; message: string; severity: string; timestamp: Date; source: string; acknowledged: boolean }) {
+  emitAlert(
+    serverId: string,
+    alert: {
+      id: string;
+      title: string;
+      message: string;
+      severity: string;
+      timestamp: Date;
+      source: string;
+      acknowledged: boolean;
+    },
+  ) {
     this.server.to(`server:${serverId}`).emit('alert', { ...alert, serverId });
   }
 
@@ -77,7 +99,11 @@ export class StatsGateway implements OnGatewayConnection, OnGatewayDisconnect, O
     }
     try {
       const payload = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
-      client.data.user = { userId: payload.sub, username: payload.username, role: payload.role };
+      client.data.user = {
+        userId: payload.sub,
+        username: payload.username,
+        role: payload.role,
+      };
     } catch {
       this.logger.warn(`Client ${client.id} disconnected — invalid token`);
       client.disconnect();
@@ -95,7 +121,9 @@ export class StatsGateway implements OnGatewayConnection, OnGatewayDisconnect, O
     const { serverId } = payload;
     if (!serverId) return;
     if (client.data.user?.role !== 'admin') {
-      this.logger.warn(`${client.id} (${client.data.user?.role}) tried to subscribe to ${serverId} — denied`);
+      this.logger.warn(
+        `${client.id} (${client.data.user?.role}) tried to subscribe to ${serverId} — denied`,
+      );
       return;
     }
 

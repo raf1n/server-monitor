@@ -34,6 +34,7 @@ import { ApiKeysModule } from './api-keys/api-keys.module';
     AlertsModule,
     NotificationsModule,
     SettingsModule,
+    ApiKeysModule,
   ],
   providers: [
     {

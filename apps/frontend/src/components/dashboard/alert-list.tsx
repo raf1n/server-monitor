@@ -1,17 +1,17 @@
 
-import { useMemo } from 'react';
+import { useMemo } from "react";
 import {
   AlertTriangle,
   Bell,
   CheckCircle2,
   Info,
   ShieldAlert,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
-import type { AlertEvent, Severity } from '@/lib/types';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { AlertEvent, Severity } from "@/lib/types";
 
 interface AlertListProps {
   alerts: AlertEvent[];
@@ -21,28 +21,28 @@ interface AlertListProps {
 const SEVERITY_META: Record<Severity, { icon: React.ComponentType<{ className?: string }>; color: string; badge: string; label: string }> = {
   critical: {
     icon: ShieldAlert,
-    color: 'text-destructive bg-destructive/10',
-    badge: 'bg-destructive/15 text-destructive border-destructive/30',
-    label: 'Critical',
+    color: "text-destructive bg-destructive/10",
+    badge: "bg-destructive/15 text-destructive border-destructive/30",
+    label: "Critical",
   },
   warning: {
     icon: AlertTriangle,
-    color: 'text-warning bg-warning/10',
-    badge: 'bg-warning/15 text-warning border-warning/30',
-    label: 'Warning',
+    color: "text-warning bg-warning/10",
+    badge: "bg-warning/15 text-warning border-warning/30",
+    label: "Warning",
   },
   info: {
     icon: Info,
-    color: 'text-primary bg-primary/10',
-    badge: 'bg-primary/15 text-primary border-primary/30',
-    label: 'Info',
+    color: "text-primary bg-primary/10",
+    badge: "bg-primary/15 text-primary border-primary/30",
+    label: "Info",
   },
 };
 
 function formatRelative(ts: number): string {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
+  if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours}h ago`;
@@ -100,7 +100,7 @@ export function AlertList({ alerts, loading = false }: AlertListProps) {
                   key={alert.id}
                   className="flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-accent/40"
                 >
-                  <div className={cn('mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md', meta.color)}>
+                  <div className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md", meta.color)}>
                     <Icon className="h-[18px] w-[18px]" />
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -108,7 +108,7 @@ export function AlertList({ alerts, loading = false }: AlertListProps) {
                       <span className="truncate text-sm font-medium text-foreground">
                         {alert.title}
                       </span>
-                      <Badge variant="outline" className={cn('shrink-0 text-[10px]', meta.badge)}>
+                      <Badge variant="outline" className={cn("shrink-0 text-[10px]", meta.badge)}>
                         {meta.label}
                       </Badge>
                     </div>

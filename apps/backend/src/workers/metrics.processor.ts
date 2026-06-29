@@ -28,7 +28,8 @@ export class MetricsProcessor extends WorkerHost {
     const data = job.data as Record<string, unknown>;
     const serverId = data.serverId as string;
     if (!serverId) return;
-    const intervalMs = data.intervalMs != null ? Number(data.intervalMs) : undefined;
+    const intervalMs =
+      data.intervalMs != null ? Number(data.intervalMs) : undefined;
     const agentVersion = data.version as string | undefined;
 
     await this.servers.register(
@@ -63,7 +64,9 @@ export class MetricsProcessor extends WorkerHost {
           timestamp: new Date((data.timestamp as number) || Date.now()),
         });
       } catch (e) {
-        this.logger.warn(`DB save failed for ${serverId}: ${(e as Error).message}`);
+        this.logger.warn(
+          `DB save failed for ${serverId}: ${(e as Error).message}`,
+        );
       }
     }
 
@@ -75,7 +78,9 @@ export class MetricsProcessor extends WorkerHost {
         const disk = (data.disk as number) || 0;
         await this.alertsService.evaluateAndCreate(serverId, cpu, memory, disk);
       } catch (e) {
-        this.logger.warn(`Alert evaluation failed for ${serverId}: ${(e as Error).message}`);
+        this.logger.warn(
+          `Alert evaluation failed for ${serverId}: ${(e as Error).message}`,
+        );
       }
     }
 

@@ -1,11 +1,11 @@
 
-import { useMemo } from 'react';
-import { Area, AreaChart, ResponsiveContainer } from 'recharts';
-import { ArrowDown, ArrowUp } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useMemo } from "react";
+import { Area, AreaChart, ResponsiveContainer } from "recharts";
+import { ArrowDown, ArrowUp } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export type StatStatus = 'good' | 'warning' | 'critical';
+export type StatStatus = "good" | "warning" | "critical";
 
 interface StatCardProps {
   title: string;
@@ -21,29 +21,29 @@ interface StatCardProps {
 
 const STATUS_STYLES: Record<StatStatus, { color: string; ring: string; text: string; bg: string }> = {
   good: {
-    color: 'hsl(var(--success))',
-    ring: 'ring-success/20',
-    text: 'text-success',
-    bg: 'bg-success/10',
+    color: "hsl(var(--success))",
+    ring: "ring-success/20",
+    text: "text-success",
+    bg: "bg-success/10",
   },
   warning: {
-    color: 'hsl(var(--warning))',
-    ring: 'ring-warning/20',
-    text: 'text-warning',
-    bg: 'bg-warning/10',
+    color: "hsl(var(--warning))",
+    ring: "ring-warning/20",
+    text: "text-warning",
+    bg: "bg-warning/10",
   },
   critical: {
-    color: 'hsl(var(--destructive))',
-    ring: 'ring-destructive/20',
-    text: 'text-destructive',
-    bg: 'bg-destructive/10',
+    color: "hsl(var(--destructive))",
+    ring: "ring-destructive/20",
+    text: "text-destructive",
+    bg: "bg-destructive/10",
   },
 };
 
 function statusFromValue(value: number, thresholds: [number, number]): StatStatus {
-  if (value >= thresholds[1]) return 'critical';
-  if (value >= thresholds[0]) return 'warning';
-  return 'good';
+  if (value >= thresholds[1]) return "critical";
+  if (value >= thresholds[0]) return "warning";
+  return "good";
 }
 
 export { statusFromValue };
@@ -51,16 +51,16 @@ export { statusFromValue };
 export function StatCard({
   title,
   value,
-  unit = '%',
+  unit = "%",
   data,
-  dataKey = 'value',
+  dataKey = "value",
   status,
   loading = false,
   icon: Icon,
   delta,
 }: StatCardProps) {
   const styles = STATUS_STYLES[status];
-  const gradientId = useMemo(() => `spark-${title.replace(/\s+/g, '-').toLowerCase()}`, [title]);
+  const gradientId = useMemo(() => `spark-${title.replace(/\s+/g, "-").toLowerCase()}`, [title]);
 
   if (loading) {
     return (
@@ -78,7 +78,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        'group relative overflow-hidden rounded-lg border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md hover:ring-1',
+        "group relative overflow-hidden rounded-lg border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md hover:ring-1",
         styles.ring
       )}
     >
@@ -89,14 +89,14 @@ export function StatCard({
           </span>
           <div className="flex items-baseline gap-1.5">
             <span className="text-3xl font-semibold tabular-nums text-foreground">
-              {typeof value === 'number' ? value.toFixed(1) : value}
+              {typeof value === "number" ? value.toFixed(1) : value}
             </span>
             {unit && <span className="text-sm font-medium text-muted-foreground">{unit}</span>}
           </div>
         </div>
         <div
           className={cn(
-            'flex h-9 w-9 items-center justify-center rounded-md',
+            "flex h-9 w-9 items-center justify-center rounded-md",
             styles.bg,
             styles.text
           )}
@@ -109,8 +109,8 @@ export function StatCard({
         <div className="mt-1.5 flex items-center gap-1 text-xs">
           <span
             className={cn(
-              'flex items-center gap-0.5 font-medium',
-              delta >= 0 ? 'text-warning' : 'text-success'
+              "flex items-center gap-0.5 font-medium",
+              delta >= 0 ? "text-warning" : "text-success"
             )}
           >
             {delta >= 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}

@@ -1,6 +1,6 @@
 
-import { cn } from '@/lib/utils';
-import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ChartCardProps {
   title: string;
@@ -20,7 +20,7 @@ export function ChartCard({
   action,
 }: ChartCardProps) {
   return (
-    <div className={cn('flex flex-col rounded-lg border border-border bg-card shadow-sm', className)}>
+    <div className={cn("flex flex-col rounded-lg border border-border bg-card shadow-sm", className)}>
       <div className="flex items-center justify-between border-b border-border px-5 py-4">
         <div className="flex flex-col gap-0.5">
           <h3 className="text-sm font-semibold text-foreground">{title}</h3>

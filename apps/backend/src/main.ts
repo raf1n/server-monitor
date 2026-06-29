@@ -13,7 +13,9 @@ async function bootstrap() {
   if (process.env.NODE_ENV === 'production') {
     const secret = process.env.JWT_SECRET || '';
     if (secret.length < 32 || secret === 'dev-secret-change-in-production') {
-      logger.error('JWT_SECRET must be set to a strong random value in production (min 32 chars). Aborting.');
+      logger.error(
+        'JWT_SECRET must be set to a strong random value in production (min 32 chars). Aborting.',
+      );
       process.exit(1);
     }
     if (!process.env.AGENT_API_KEY) {

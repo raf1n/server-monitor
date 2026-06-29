@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { useUnacknowledgedCount } from "@/store";
+import { useAppSelector } from "@/store";
+import { selectUnacknowledgedCount } from "@/features/alerts/alertsSelectors";
 import {
   Activity,
   AlertTriangle,
@@ -44,11 +45,10 @@ interface SidebarProps {
 
 export function Sidebar({ mobileOpen = false, onMobileToggle }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const alertCount = useUnacknowledgedCount();
+  const alertCount = useAppSelector(selectUnacknowledgedCount);
 
   return (
     <>
-      {/* Mobile backdrop */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -60,7 +60,6 @@ export function Sidebar({ mobileOpen = false, onMobileToggle }: SidebarProps) {
         className={cn(
           "flex h-screen flex-col border-r border-border bg-card transition-all duration-300 ease-in-out",
           collapsed ? "w-[68px]" : "w-60",
-          // Mobile overlay
           "fixed inset-y-0 left-0 z-50 -translate-x-full lg:static lg:z-auto lg:translate-x-0",
           mobileOpen && "translate-x-0",
         )}

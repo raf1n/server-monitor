@@ -75,7 +75,9 @@ export class NotificationsService {
 
         await this.send(notification);
       } catch (err) {
-        this.logger.error(`Failed to dispatch ${dest.type} notification: ${(err as Error).message}`);
+        this.logger.error(
+          `Failed to dispatch ${dest.type} notification: ${(err as Error).message}`,
+        );
       }
     }
   }
@@ -96,14 +98,19 @@ export class NotificationsService {
         break;
       default:
         this.logger.warn(`Unknown notification type: ${notification.type}`);
-        await this.markFailed(notification.id, `Unknown type: ${notification.type}`);
+        await this.markFailed(
+          notification.id,
+          `Unknown type: ${notification.type}`,
+        );
         return;
     }
   }
 
   private async sendEmail(notification: NotificationEntity): Promise<void> {
     try {
-      this.logger.log(`[EMAIL] To: ${notification.destination || 'default'}, Subject: ${notification.title}`);
+      this.logger.log(
+        `[EMAIL] To: ${notification.destination || 'default'}, Subject: ${notification.title}`,
+      );
       this.logger.log(`[EMAIL] Body: ${notification.message}`);
       await this.markSent(notification.id);
     } catch (err) {
@@ -145,10 +152,14 @@ export class NotificationsService {
 
   private async sendDiscord(notification: NotificationEntity): Promise<void> {
     try {
-      const url = notification.destination || process.env.NOTIFICATION_DISCORD_WEBHOOK;
+      const url =
+        notification.destination || process.env.NOTIFICATION_DISCORD_WEBHOOK;
       if (!url) {
         this.logger.warn('Discord webhook not configured');
-        await this.markFailed(notification.id, 'Discord webhook not configured');
+        await this.markFailed(
+          notification.id,
+          'Discord webhook not configured',
+        );
         return;
       }
 
@@ -169,8 +180,16 @@ export class NotificationsService {
               description: notification.message,
               color: colors[notification.severity] || 0x5865f2,
               fields: [
-                { name: 'Server', value: notification.serverId || 'N/A', inline: true },
-                { name: 'Severity', value: notification.severity, inline: true },
+                {
+                  name: 'Server',
+                  value: notification.serverId || 'N/A',
+                  inline: true,
+                },
+                {
+                  name: 'Severity',
+                  value: notification.severity,
+                  inline: true,
+                },
               ],
               timestamp: notification.createdAt.toISOString(),
             },
@@ -204,7 +223,11 @@ export class NotificationsService {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
+          body: JSON.stringify({
+            chat_id: chatId,
+            text,
+            parse_mode: 'Markdown',
+          }),
         },
       );
 
@@ -223,20 +246,34 @@ export class NotificationsService {
   }
 
   private async markFailed(id: string, error: string): Promise<void> {
-    await this.notificationRepo.update(id, { status: 'failed', meta: { error } });
+    await this.notificationRepo.update(id, {
+      status: 'failed',
+      meta: { error },
+    });
   }
 
-  private async getNotificationDestinations(serverId?: string): Promise<Array<{ type: string; destination?: string }>> {
+  private async getNotificationDestinations(
+    serverId?: string,
+  ): Promise<Array<{ type: string; destination?: string }>> {
     const destinations: Array<{ type: string; destination?: string }> = [];
 
     if (process.env.NOTIFICATION_EMAIL) {
-      destinations.push({ type: 'email', destination: process.env.NOTIFICATION_EMAIL });
+      destinations.push({
+        type: 'email',
+        destination: process.env.NOTIFICATION_EMAIL,
+      });
     }
     if (process.env.WEBHOOK_URL) {
-      destinations.push({ type: 'webhook', destination: process.env.WEBHOOK_URL });
+      destinations.push({
+        type: 'webhook',
+        destination: process.env.WEBHOOK_URL,
+      });
     }
     if (process.env.NOTIFICATION_DISCORD_WEBHOOK) {
-      destinations.push({ type: 'discord', destination: process.env.NOTIFICATION_DISCORD_WEBHOOK });
+      destinations.push({
+        type: 'discord',
+        destination: process.env.NOTIFICATION_DISCORD_WEBHOOK,
+      });
     }
     if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
       destinations.push({ type: 'telegram' });

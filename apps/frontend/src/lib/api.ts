@@ -1,19 +1,19 @@
 import type { ProcessInfo, ServerInfo } from "./types";
 
 const API_HOST: string | undefined = import.meta.env.VITE_API_URL;
-const API_PREFIX = '/api';
+const API_PREFIX = "/api";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options?.headers as Record<string, string>),
   };
-  const url = `${API_HOST ?? ''}${API_PREFIX}${path}`;
-  const res = await fetch(url, { ...options, headers, credentials: 'include' });
+  const url = `${API_HOST ?? ""}${API_PREFIX}${path}`;
+  const res = await fetch(url, { ...options, headers, credentials: "include" });
   if (res.status === 401) {
-    const { useStore } = await import('@/store');
-    useStore.getState().logout();
-    window.location.href = '/login';
+    const { store } = await import("@/store");
+    store.dispatch({ type: "auth/logout" });
+    window.location.href = "/login";
     throw new Error("Unauthorized");
   }
   if (!res.ok) {
@@ -104,10 +104,10 @@ export const api = {
       request<ProcessInfo[]>(`/servers/${serverId}/processes`, { signal }),
   },
   users: {
-    me: () => request<{ id: string; username: string; email?: string; createdAt: string; updatedAt: string }>('/users/me'),
+    me: () => request<{ id: string; username: string; email?: string; createdAt: string; updatedAt: string }>("/users/me"),
     update: (data: { username?: string; email?: string; currentPassword?: string; newPassword?: string }) =>
-      request<{ id: string; username: string; email?: string; createdAt: string; updatedAt: string }>('/users/me', {
-        method: 'PATCH',
+      request<{ id: string; username: string; email?: string; createdAt: string; updatedAt: string }>("/users/me", {
+        method: "PATCH",
         body: JSON.stringify(data),
       }),
   },
@@ -142,15 +142,15 @@ export const api = {
         revoked: boolean;
         lastUsedAt?: string;
         createdAt: string;
-      }>>('/api-keys'),
+      }>>("/api-keys"),
     create: (data?: { serverId?: string; label?: string }) =>
-      request<{ id: string; key: string; keyPrefix: string; serverId?: string; label?: string; createdAt: string }>('/api-keys', {
-        method: 'POST',
+      request<{ id: string; key: string; keyPrefix: string; serverId?: string; label?: string; createdAt: string }>("/api-keys", {
+        method: "POST",
         body: JSON.stringify(data || {}),
       }),
     revoke: (id: string) =>
-      request<{ revoked: boolean }>(`/api-keys/${id}/revoke`, { method: 'POST' }),
+      request<{ revoked: boolean }>(`/api-keys/${id}/revoke`, { method: "POST" }),
     delete: (id: string) =>
-      request<void>(`/api-keys/${id}`, { method: 'DELETE' }),
+      request<void>(`/api-keys/${id}`, { method: "DELETE" }),
   },
 };

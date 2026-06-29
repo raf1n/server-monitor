@@ -8,16 +8,16 @@ import {
   Res,
   Req,
   Logger,
-} from "@nestjs/common";
-import { Response, Request } from "express";
-import { Public } from "./public.decorator";
-import { AuthService } from "./auth.service";
-import { LoginDto } from "../dtos/auth.dto";
-import { UsersService } from "../users/users.service";
+} from '@nestjs/common';
+import { Response } from 'express';
+import { Public } from './public.decorator';
+import { AuthService } from './auth.service';
+import { LoginDto } from '../dtos/auth.dto';
+import { UsersService } from '../users/users.service';
 
-const isProd = process.env.NODE_ENV === "production";
+const isProd = process.env.NODE_ENV === 'production';
 
-@Controller("auth")
+@Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
@@ -27,35 +27,32 @@ export class AuthController {
   ) {}
 
   @Public()
-  @Post("login")
+  @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(
-    @Body() body: LoginDto,
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async login(@Body() body: LoginDto, @Res({ passthrough: true }) res: Response) {
     const { accessToken } = await this.auth.login(body.username, body.password);
 
-    res.cookie("token", accessToken, {
+    res.cookie('token', accessToken, {
       httpOnly: true,
       secure: isProd,
-      sameSite: isProd ? "strict" : "lax",
+      sameSite: isProd ? 'strict' : 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      path: "/",
+      path: '/',
     });
 
     return { success: true };
   }
 
   @Public()
-  @Post("logout")
+  @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie("token", { path: "/" });
+    res.clearCookie('token', { path: '/' });
     return { success: true };
   }
 
   // Protected by default (global JwtAuthGuard — no @Public() decorator)
-  @Get("me")
+  @Get('me')
   async me(@Req() req: any) {
     const user = await this.users.findByIdOrUsername(req.user?.userId);
     if (!user) return { id: null };

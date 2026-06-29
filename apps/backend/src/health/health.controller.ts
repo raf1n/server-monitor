@@ -1,15 +1,15 @@
-import { Controller, Get, Logger } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { Inject } from "@nestjs/common";
-import { REDIS_PUBLISHER } from "../redis/redis.module";
-import { Public } from "../auth/public.decorator";
-import type Redis from "ioredis";
-import { MetricSnapshotEntity } from "../database/entities/metric-snapshot.entity";
-import * as buildInfo from "../../build-info.json";
+import { Controller, Get, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Inject } from '@nestjs/common';
+import { REDIS_PUBLISHER } from '../redis/redis.module';
+import { Public } from '../auth/public.decorator';
+import type Redis from 'ioredis';
+import { MetricSnapshotEntity } from '../database/entities/metric-snapshot.entity';
+import * as buildInfo from '../../build-info.json';
 
 @Public()
-@Controller("health")
+@Controller('health')
 export class HealthController {
   private readonly logger = new Logger(HealthController.name);
 
@@ -33,29 +33,29 @@ export class HealthController {
       try {
         await this.metricRepo.findOne({
           where: {},
-          order: { timestamp: "DESC" },
+          order: { timestamp: 'DESC' },
         });
-        status.database = "ok";
+        status.database = 'ok';
       } catch {
-        status.database = "error";
+        status.database = 'error';
       }
     } else {
-      status.database = "not_configured";
+      status.database = 'not_configured';
     }
 
     // Redis check
     if (this.redis) {
       try {
         await this.redis.ping();
-        status.redis = "ok";
+        status.redis = 'ok';
       } catch {
-        status.redis = "error";
+        status.redis = 'error';
       }
     } else {
-      status.redis = "not_configured";
+      status.redis = 'not_configured';
     }
 
-    const healthy = Object.values(status).every((s) => s === "ok");
-    return { status: healthy ? "ok" : "degraded", checks: status };
+    const healthy = Object.values(status).every((s) => s === 'ok');
+    return { status: healthy ? 'ok' : 'degraded', checks: status };
   }
 }
