@@ -12,6 +12,7 @@ import {
   Server,
   Settings,
   User,
+  Waypoints,
   Workflow,
   X,
 } from "lucide-react";
@@ -29,6 +30,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/servers", label: "Servers", icon: Server },
   { to: "/processes", label: "Processes", icon: Workflow },
+  { to: "/ports", label: "Ports", icon: Waypoints },
   { to: "/alerts", label: "Alerts", icon: AlertTriangle },
   { to: "/api-keys", label: "API Keys", icon: Key },
   { to: "/settings", label: "Settings", icon: Settings },

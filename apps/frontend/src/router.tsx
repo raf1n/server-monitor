@@ -24,6 +24,9 @@ const ProfilePage = lazy(() =>
 const ApiKeysPage = lazy(() =>
   import('./components/dashboard/pages/api-keys-page').then((m) => ({ default: m.ApiKeysPage })),
 );
+const PortsPage = lazy(() =>
+  import('./components/dashboard/pages/ports-page').then((m) => ({ default: m.PortsPage })),
+);
 
 function PageLoader() {
   return (
@@ -54,6 +57,7 @@ export const router = createBrowserRouter([
       { path: 'settings', element: <SuspenseWrapper><SettingsPage /></SuspenseWrapper> },
       { path: 'profile', element: <SuspenseWrapper><ProfilePage /></SuspenseWrapper> },
       { path: 'api-keys', element: <SuspenseWrapper><ApiKeysPage /></SuspenseWrapper> },
+      { path: 'ports', element: <SuspenseWrapper><PortsPage /></SuspenseWrapper> },
       { path: '*', element: <Navigate to="/dashboard" replace /> },
     ],
   },

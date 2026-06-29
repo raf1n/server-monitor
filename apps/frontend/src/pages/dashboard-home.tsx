@@ -8,6 +8,7 @@ import {
   TimeSeriesChart,
 } from "@/components/dashboard/charts";
 import { ProcessTable } from "@/components/dashboard/process-table";
+import { PortsTable } from "@/components/dashboard/ports-table";
 import { StatCard, statusFromValue } from "@/components/dashboard/stat-card";
 import {
   useServers,
@@ -31,7 +32,12 @@ export function DashboardHome() {
 
   const history = useMemo(() => {
     const now = Date.now();
-    const rangeMs = timeRange === '5m' ? 300_000 : timeRange === '1h' ? 3_600_000 : 86_400_000;
+    const rangeMs =
+      timeRange === "5m"
+        ? 300_000
+        : timeRange === "1h"
+          ? 3_600_000
+          : 86_400_000;
     const server = servers.find((s) => s.id === serverId);
     let max = TIME_RANGE_POINTS[timeRange];
     if (server?.agentIntervalMs && server.agentIntervalMs > 0) {
@@ -184,6 +190,12 @@ export function DashboardHome() {
         </div>
         <AlertList alerts={stats?.alerts ?? []} loading={loading} />
       </div>
+
+      <PortsTable
+        ports={stats?.ports ?? []}
+        loading={loading}
+        compactMode={settings.compactMode}
+      />
     </div>
   );
 }

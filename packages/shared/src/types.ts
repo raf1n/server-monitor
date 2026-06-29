@@ -1,8 +1,8 @@
-export type ServerStatus = 'online' | 'offline' | 'degraded';
+export type ServerStatus = "online" | "offline" | "degraded";
 
-export type Severity = 'critical' | 'warning' | 'info';
+export type Severity = "critical" | "warning" | "info";
 
-export type ProcessStatus = 'online' | 'stopped' | 'errored' | 'stopping';
+export type ProcessStatus = "online" | "stopped" | "errored" | "stopping";
 
 export interface ServerInfo {
   id: string;
@@ -24,8 +24,17 @@ export interface ProcessInfo {
   uptime: number;
   restarts: number;
   pid?: number;
-  source?: 'pm2' | 'system';
-  sortBy?: 'cpu' | 'memory';
+  source?: "pm2" | "system";
+  sortBy?: "cpu" | "memory";
+}
+
+export interface PortInfo {
+  localPort: number;
+  localAddress: string;
+  protocol: string;
+  state: string;
+  pid: number | null;
+  process: string;
 }
 
 export interface DiskMount {
@@ -74,6 +83,7 @@ export interface ServerStats {
   uptime: number;
   mounts: DiskMount[];
   processes: ProcessInfo[];
+  ports: PortInfo[];
   history: MetricPoint[];
   alerts: AlertEvent[];
 }

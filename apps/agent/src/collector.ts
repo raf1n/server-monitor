@@ -6,6 +6,7 @@ import type {
   MetricPoint,
   AlertEvent,
   ProcessInfo,
+  PortInfo,
 } from "@server-monitor/shared";
 import { collectPm2Processes } from "./pm2-collector";
 import { collectSystemProcesses } from "./system-collector";
@@ -24,10 +25,19 @@ const BYTES_TO_KB = 1024;
 const CPU_CORES = os.cpus().length;
 
 const PHYSICAL_FS_TYPES = new Set([
-  'ext4', 'ext3', 'ext2',
-  'xfs', 'btrfs', 'zfs',
-  'apfs', 'hfs', 'hfs+',
-  'ntfs', 'vfat', 'exfat', 'fuseblk',
+  "ext4",
+  "ext3",
+  "ext2",
+  "xfs",
+  "btrfs",
+  "zfs",
+  "apfs",
+  "hfs",
+  "hfs+",
+  "ntfs",
+  "vfat",
+  "exfat",
+  "fuseblk",
 ]);
 
 export class Collector {
@@ -41,11 +51,12 @@ export class Collector {
   }
 
   async collect(serverId: string): Promise<ServerStats> {
-    const [cpuLoad, mem, fsSize, netStats, time] = await Promise.all([
+    const [cpuLoad, mem, fsSize, netStats, netConns, time] = await Promise.all([
       si.currentLoad(),
       si.mem(),
       si.fsSize(),
       si.networkStats(),
+      si.networkConnections(),
       si.time(),
     ]);
     const pm2Processes = await collectPm2Processes();
@@ -99,6 +110,19 @@ export class Collector {
 
     const allProcesses = [...systemProcesses, ...pm2WithSource];
 
+    const ports: PortInfo[] = netConns
+      .filter((c) => c.state === "LISTEN")
+      .map((c) => ({
+        localPort: Number(c.localPort) || 0,
+        localAddress: c.localAddress || "0.0.0.0",
+        protocol: c.protocol || "tcp",
+        state: c.state,
+        pid: c.pid ?? null,
+        process: c.process || "",
+      }))
+      .filter((p) => p.localPort > 0)
+      .sort((a, b) => a.localPort - b.localPort);
+
     const alerts = this.generateAlerts(
       serverId,
       cpuPct,
@@ -129,6 +153,7 @@ export class Collector {
       mounts,
       processes: allProcesses,
       history: this.history,
+      ports,
       alerts,
     };
   }

@@ -167,8 +167,18 @@ export function ProcessTable({
   }
 
   return (
-    <div className={cn('rounded-lg border border-border bg-card shadow-sm', compactMode && 'text-xs')}>
-      <div className={cn('flex flex-col gap-3 border-b border-border sm:flex-row sm:items-center sm:justify-between', compactMode ? 'px-3 py-2' : 'px-5 py-4')}>
+    <div
+      className={cn(
+        "rounded-lg border border-border bg-card shadow-sm",
+        compactMode && "text-xs",
+      )}
+    >
+      <div
+        className={cn(
+          "flex flex-col gap-3 border-b border-border sm:flex-row sm:items-center sm:justify-between",
+          compactMode ? "px-3 py-2" : "px-5 py-4",
+        )}
+      >
         <div className="flex items-center gap-2">
           <Workflow className="h-4 w-4 text-muted-foreground" />
           <h3 className="text-sm font-semibold text-foreground">Processes</h3>
@@ -295,7 +305,12 @@ export function ProcessTable({
                   key={proc.id}
                   className="border-border transition-colors hover:bg-accent/50"
                 >
-                  <TableCell className={cn('font-mono font-medium text-foreground', compactMode ? 'pl-3 text-xs' : 'pl-5 text-sm')}>
+                  <TableCell
+                    className={cn(
+                      "font-mono font-medium text-foreground",
+                      compactMode ? "pl-3 text-xs" : "pl-5 text-sm",
+                    )}
+                  >
                     {proc.name}
                   </TableCell>
                   <TableCell>
@@ -326,22 +341,32 @@ export function ProcessTable({
                   </TableCell>
                   <TableCell
                     className={cn(
-                      'text-right font-mono tabular-nums',
-                      compactMode ? 'text-xs' : 'text-sm',
+                      "text-right font-mono tabular-nums",
+                      compactMode ? "text-xs" : "text-sm",
                       cpuColor(
-                        viewFilter === 'memory' ? proc.memory : proc.cpu,
+                        viewFilter === "memory" ? proc.memory : proc.cpu,
                       ),
                     )}
                   >
-                    {viewFilter === 'memory'
+                    {viewFilter === "memory"
                       ? proc.memory.toFixed(1)
                       : proc.cpu.toFixed(1)}
                     %
                   </TableCell>
-                  <TableCell className={cn('text-right font-mono tabular-nums text-foreground', compactMode ? 'text-xs' : 'text-sm')}>
+                  <TableCell
+                    className={cn(
+                      "text-right font-mono tabular-nums text-foreground",
+                      compactMode ? "text-xs" : "text-sm",
+                    )}
+                  >
                     {formatMemory(proc.memoryBytes)}
                   </TableCell>
-                  <TableCell className={cn('text-right font-mono tabular-nums text-muted-foreground', compactMode ? 'pr-3 text-xs' : 'pr-5 text-sm')}>
+                  <TableCell
+                    className={cn(
+                      "text-right font-mono tabular-nums text-muted-foreground",
+                      compactMode ? "pr-3 text-xs" : "pr-5 text-sm",
+                    )}
+                  >
                     {formatUptime(proc.uptime)}
                   </TableCell>
                 </TableRow>

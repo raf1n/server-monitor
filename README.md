@@ -2,7 +2,7 @@
 
 Real-time server monitoring and observability platform — lightweight, self-hosted, inspired by Datadog.
 
-Collects CPU, memory, disk, network, and process metrics from multiple servers via a lightweight agent, streams them through a NestJS backend with Redis queueing and TimescaleDB storage, and visualizes everything in a real-time React dashboard.
+Collects CPU, memory, disk, network, ports, and process metrics from multiple servers via a lightweight agent, streams them through a NestJS backend with Redis queueing and TimescaleDB storage, and visualizes everything in a real-time React dashboard.
 
 ## Architecture
 
@@ -89,6 +89,7 @@ API_KEY=your-key-here bash <(curl -sSL https://your-domain/install.sh)
 This installs a systemd service that starts on boot and restarts on crash.
 
 **Agent commands:**
+
 ```bash
 systemctl status server-monitor-agent
 journalctl -u server-monitor-agent -f
@@ -98,12 +99,12 @@ systemctl stop server-monitor-agent
 
 ### Ports
 
-| Service | Port |
-|---|---|
-| Frontend | `5173` (dev) / `443` (prod via nginx) |
-| Backend | `3300` |
-| PostgreSQL | `5434` (dev) / internal only (prod) |
-| Redis | `6379` (dev) / internal only (prod) |
+| Service    | Port                                  |
+| ---------- | ------------------------------------- |
+| Frontend   | `5173` (dev) / `443` (prod via nginx) |
+| Backend    | `3300`                                |
+| PostgreSQL | `5434` (dev) / internal only (prod)   |
+| Redis      | `6379` (dev) / internal only (prod)   |
 
 ## Project Structure
 
@@ -113,7 +114,7 @@ server-monitor/
 │   ├── agent/          # Server-side metrics collector
 │   │   └── src/
 │   │       ├── index.ts           # Entry point, CLI args
-│   │       ├── collector.ts       # Metric collection + alert generation
+│   │       ├── collector.ts       # Metric + port collection + alert generation
 │   │       ├── sender.ts          # HTTP POST to backend
 │   │       ├── system-collector.ts# OS process collection
 │   │       └── pm2-collector.ts   # PM2 process collection
@@ -155,25 +156,25 @@ server-monitor/
 
 ## Scripts
 
-| Command             | Description                              |
-| ------------------- | ---------------------------------------- |
-| `pnpm dev`          | Start all packages in parallel           |
-| `pnpm dev:frontend` | Frontend only (Vite dev server)          |
-| `pnpm dev:backend`  | Backend only (NestJS watch mode)         |
-| `pnpm dev:agent`    | Agent only (collects from local machine) |
-| `pnpm build`        | Build all packages                       |
-| `pnpm typecheck`    | TypeScript check all packages            |
-| `pnpm lint`         | Lint all packages                        |
-| `pnpm docker:up`    | Start dev containers (PostgreSQL, Redis, backend, frontend) |
-| `pnpm docker:down`  | Stop dev containers (`-- -v` to wipe volumes) |
-| `pnpm docker:rebuild` | Rebuild and restart dev containers    |
-| `pnpm docker:logs`  | Tail dev container logs                  |
-| `pnpm docker:prod:up` | Start prod containers (backend + DBs)  |
-| `pnpm docker:prod:stop` | Stop prod containers without removing them  |
-| `pnpm docker:prod:down` | Stop and remove prod containers (`-- -v` to wipe volumes) |
-| `pnpm docker:prod:rebuild` | Build frontend, rebuild and restart prod backend |
-| `pnpm docker:prod:logs` | Tail prod container logs             |
-| `pnpm deploy`       | Full deploy (deploy.sh)                  |
+| Command                    | Description                                                 |
+| -------------------------- | ----------------------------------------------------------- |
+| `pnpm dev`                 | Start all packages in parallel                              |
+| `pnpm dev:frontend`        | Frontend only (Vite dev server)                             |
+| `pnpm dev:backend`         | Backend only (NestJS watch mode)                            |
+| `pnpm dev:agent`           | Agent only (collects from local machine)                    |
+| `pnpm build`               | Build all packages                                          |
+| `pnpm typecheck`           | TypeScript check all packages                               |
+| `pnpm lint`                | Lint all packages                                           |
+| `pnpm docker:up`           | Start dev containers (PostgreSQL, Redis, backend, frontend) |
+| `pnpm docker:down`         | Stop dev containers (`-- -v` to wipe volumes)               |
+| `pnpm docker:rebuild`      | Rebuild and restart dev containers                          |
+| `pnpm docker:logs`         | Tail dev container logs                                     |
+| `pnpm docker:prod:up`      | Start prod containers (backend + DBs)                       |
+| `pnpm docker:prod:stop`    | Stop prod containers without removing them                  |
+| `pnpm docker:prod:down`    | Stop and remove prod containers (`-- -v` to wipe volumes)   |
+| `pnpm docker:prod:rebuild` | Build frontend, rebuild and restart prod backend            |
+| `pnpm docker:prod:logs`    | Tail prod container logs                                    |
+| `pnpm deploy`              | Full deploy (deploy.sh)                                     |
 
 ## Configuration
 
@@ -188,16 +189,16 @@ server-monitor/
 
 ### Root `.env` (production)
 
-| Variable                 | Required | Description                                                       |
-| ------------------------ | -------- | ----------------------------------------------------------------- |
-| `JWT_SECRET`             | Yes      | Secret for signing JWT tokens (min 32 chars in production)        |
-| `ADMIN_PASSWORD`         | Yes      | Admin user password (username defaults to `admin`)                |
-| `AGENT_API_KEY`          | Yes      | Master API key — works for all agents                             |
-| `REDIS_PASSWORD`         | Yes      | Password for Redis authentication                                 |
-| `DB_PASSWORD`            | Yes      | Password for PostgreSQL                                           |
-| `CORS_ORIGIN`            | No       | Frontend origin for CORS (e.g. `https://monitor.example.com`)     |
-| `ALLOW_REGISTRATION`     | No       | `true` to allow open user registration (default: `false`)         |
-| `METRICS_RETENTION_DAYS` | No       | Auto-drop snapshots older than N days (default: `7`)              |
+| Variable                 | Required | Description                                                   |
+| ------------------------ | -------- | ------------------------------------------------------------- |
+| `JWT_SECRET`             | Yes      | Secret for signing JWT tokens (min 32 chars in production)    |
+| `ADMIN_PASSWORD`         | Yes      | Admin user password (username defaults to `admin`)            |
+| `AGENT_API_KEY`          | Yes      | Master API key — works for all agents                         |
+| `REDIS_PASSWORD`         | Yes      | Password for Redis authentication                             |
+| `DB_PASSWORD`            | Yes      | Password for PostgreSQL                                       |
+| `CORS_ORIGIN`            | No       | Frontend origin for CORS (e.g. `https://monitor.example.com`) |
+| `ALLOW_REGISTRATION`     | No       | `true` to allow open user registration (default: `false`)     |
+| `METRICS_RETENTION_DAYS` | No       | Auto-drop snapshots older than N days (default: `7`)          |
 
 ### Frontend (`apps/frontend/.env`)
 
@@ -252,31 +253,31 @@ Save via the Settings page in the dashboard, or directly via `PUT /settings`.
 
 ### Public (no auth)
 
-| Method | Path          | Description                          |
-| ------ | ------------- | ------------------------------------ |
-| `POST` | `/ingest`     | Receive agent metrics (API key auth) |
-| `GET`  | `/health`     | Health check (DB + Redis)            |
+| Method | Path              | Description                              |
+| ------ | ----------------- | ---------------------------------------- |
+| `POST` | `/ingest`         | Receive agent metrics (API key auth)     |
+| `GET`  | `/health`         | Health check (DB + Redis)                |
 | `GET`  | `/health/version` | Build information (version + build hash) |
-| `POST` | `/auth/login` | Login, returns JWT                   |
-| `GET`  | `/agent.js`   | Download bundled agent               |
-| `GET`  | `/install.sh` | Download agent install script        |
+| `POST` | `/auth/login`     | Login, returns JWT                       |
+| `GET`  | `/agent.js`       | Download bundled agent                   |
+| `GET`  | `/install.sh`     | Download agent install script            |
 
 ### Authenticated (JWT required)
 
-| Method  | Path                      | Description                 |
-| ------- | ------------------------- | --------------------------- |
-| `GET`   | `/servers`                | List all registered servers |
-| `GET`   | `/servers/:id/metrics`    | Historical metric points (interval-aware sampling) |
-| `GET`   | `/servers/:id/metrics/latest` | Latest raw snapshot (full ServerStats) |
-| `GET`   | `/servers/:id/processes`  | Latest process snapshot     |
-| `GET`   | `/alerts`                 | List alerts (filterable)    |
-| `PATCH` | `/alerts/:id/acknowledge` | Acknowledge an alert        |
-| `PATCH` | `/alerts/acknowledge-all` | Acknowledge all alerts      |
-| `GET`   | `/settings`               | Get all settings            |
-| `PUT`   | `/settings`               | Save a setting              |
-| `GET`   | `/notifications`          | Notification history        |
-| `GET`   | `/users/me`               | Current user profile        |
-| `PATCH` | `/users/me`               | Update profile              |
+| Method  | Path                          | Description                                        |
+| ------- | ----------------------------- | -------------------------------------------------- |
+| `GET`   | `/servers`                    | List all registered servers                        |
+| `GET`   | `/servers/:id/metrics`        | Historical metric points (interval-aware sampling) |
+| `GET`   | `/servers/:id/metrics/latest` | Latest raw snapshot (full ServerStats)             |
+| `GET`   | `/servers/:id/processes`      | Latest process snapshot                            |
+| `GET`   | `/alerts`                     | List alerts (filterable)                           |
+| `PATCH` | `/alerts/:id/acknowledge`     | Acknowledge an alert                               |
+| `PATCH` | `/alerts/acknowledge-all`     | Acknowledge all alerts                             |
+| `GET`   | `/settings`                   | Get all settings                                   |
+| `PUT`   | `/settings`                   | Save a setting                                     |
+| `GET`   | `/notifications`              | Notification history                               |
+| `GET`   | `/users/me`                   | Current user profile                               |
+| `PATCH` | `/users/me`                   | Update profile                                     |
 
 ### Admin only
 
