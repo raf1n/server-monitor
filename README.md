@@ -114,7 +114,7 @@ server-monitor/
 │   ├── agent/          # Server-side metrics collector
 │   │   └── src/
 │   │       ├── index.ts           # Entry point, CLI args
-│   │       ├── collector.ts       # Metric + port collection + alert generation
+│   │       ├── collector.ts       # Metric + port collection
 │   │       ├── sender.ts          # HTTP POST to backend
 │   │       ├── system-collector.ts# OS process collection
 │   │       └── pm2-collector.ts   # PM2 process collection
@@ -146,7 +146,7 @@ server-monitor/
 │           ├── layouts/               # Layout components (e.g. DashboardLayout)
 │           ├── pages/                 # Top-level page components
 │           ├── router.tsx             # Route definitions
-│           ├── store/                 # Zustand store (slices + selectors)
+│           ├── store/                 # Redux store (RTK + feature slices)
 │           ├── hooks/                 # React hooks
 │           └── lib/                   # Types, utils, mock data
 │
@@ -165,6 +165,7 @@ server-monitor/
 | `pnpm build`               | Build all packages                                          |
 | `pnpm typecheck`           | TypeScript check all packages                               |
 | `pnpm lint`                | Lint all packages                                           |
+| `pnpm lint:fix`            | Auto-fix lint and formatting issues                         |
 | `pnpm docker:up`           | Start dev containers (PostgreSQL, Redis, backend, frontend) |
 | `pnpm docker:down`         | Stop dev containers (`-- -v` to wipe volumes)               |
 | `pnpm docker:rebuild`      | Rebuild and restart dev containers                          |
@@ -240,14 +241,17 @@ Both can coexist. The ingest endpoint checks the master key first, then per-serv
 
 Alerts are evaluated server-side on every metric ingest, with configurable thresholds:
 
-| Setting key (DB)       | Default        | Description                        |
-| ---------------------- | -------------- | ---------------------------------- |
-| `criticalThreshold`    | `85`           | CPU & memory critical %            |
-| _(derived)_            | threshold - 10 | CPU & memory warning %             |
-| `alert.threshold.disk` | `90`           | Disk critical %                    |
-| `alert.cooldown`       | `5`            | Minutes before same alert re-fires |
+| Setting key (DB)          | Default | Description                   |
+| ------------------------- | ------- | ----------------------------- |
+| `threshold.cpu.critical`  | `85`    | CPU % triggers critical alert |
+| `threshold.cpu.warn`      | `70`    | CPU % triggers warning alert  |
+| `threshold.mem.critical`  | `90`    | Memory % triggers critical    |
+| `threshold.mem.warn`      | `80`    | Memory % triggers warning     |
+| `threshold.disk.critical` | `90`    | Disk % triggers critical      |
 
 Save via the Settings page in the dashboard, or directly via `PUT /settings`.
+
+Thresholds are served to the dashboard via `GET /alerts/thresholds` for real-time visual coloring.
 
 ## API Endpoints
 
@@ -273,6 +277,7 @@ Save via the Settings page in the dashboard, or directly via `PUT /settings`.
 | `GET`   | `/alerts`                     | List alerts (filterable)                           |
 | `PATCH` | `/alerts/:id/acknowledge`     | Acknowledge an alert                               |
 | `PATCH` | `/alerts/acknowledge-all`     | Acknowledge all alerts                             |
+| `GET`   | `/alerts/thresholds`          | Get computed alert thresholds                      |
 | `GET`   | `/settings`                   | Get all settings                                   |
 | `PUT`   | `/settings`                   | Save a setting                                     |
 | `GET`   | `/notifications`              | Notification history                               |
@@ -291,14 +296,14 @@ Save via the Settings page in the dashboard, or directly via `PUT /settings`.
 
 ## Tech Stack
 
-| Layer      | Technology                                           |
-| ---------- | ---------------------------------------------------- |
-| Frontend   | React 18, Vite 5, TypeScript, Tailwind CSS, Recharts |
-| UI Library | shadcn/ui (Radix primitives)                         |
-| Backend    | NestJS 10, TypeScript, Socket.IO                     |
-| Database   | PostgreSQL 16 + TimescaleDB                          |
-| Queue      | BullMQ (Redis)                                       |
-| Agent      | Node.js, systeminformation, PM2                      |
+| Layer      | Technology                                                                |
+| ---------- | ------------------------------------------------------------------------- |
+| Frontend   | React 18, Redux Toolkit (RTK), Vite 5, TypeScript, Tailwind CSS, Recharts |
+| UI Library | shadcn/ui (Radix primitives)                                              |
+| Backend    | NestJS 10, TypeScript, Socket.IO                                          |
+| Database   | PostgreSQL 16 + TimescaleDB                                               |
+| Queue      | BullMQ (Redis)                                                            |
+| Agent      | Node.js, systeminformation, PM2                                           |
 
 ## License
 
