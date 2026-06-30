@@ -2,13 +2,16 @@ FROM node:22-alpine AS builder
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/frontend/ ./apps/frontend/
-COPY packages/shared/ ./packages/shared/
+COPY scripts/ ./scripts/
+COPY apps/ ./apps/
+COPY packages/ ./packages/
 RUN pnpm install
 ARG VITE_API_URL=
 ENV VITE_API_URL=$VITE_API_URL
 ARG VITE_SOCKET_URL=
 ENV VITE_SOCKET_URL=$VITE_SOCKET_URL
+ARG VITE_ENV=production
+ENV VITE_ENV=$VITE_ENV
 RUN pnpm --filter @server-monitor/frontend build
 
 FROM node:22-alpine

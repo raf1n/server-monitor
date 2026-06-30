@@ -1,5 +1,5 @@
 import { NestFactory, Reflector } from '@nestjs/core';
-import { ValidationPipe, Logger, RequestMethod } from '@nestjs/common';
+import { ValidationPipe, Logger, RequestMethod, ClassSerializerInterceptor } from '@nestjs/common';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
@@ -43,6 +43,7 @@ async function bootstrap() {
   });
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.useGlobalGuards(new JwtAuthGuard(new Reflector()));
 
   app.enableShutdownHooks();

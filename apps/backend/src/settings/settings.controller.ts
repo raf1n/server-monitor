@@ -19,6 +19,8 @@ export class SettingsController {
   constructor(private readonly settings: SettingsService) {}
 
   @Get()
+  @Roles('admin')
+  @UseGuards(RolesGuard)
   async getAll(@Query('serverId') serverId?: string) {
     return this.settings.getAll(serverId);
   }

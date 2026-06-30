@@ -163,7 +163,7 @@ info "Building shared package..."
 pnpm build:shared
 
 info "Building frontend (same-origin mode)..."
-VITE_API_URL= VITE_SOCKET_URL= pnpm build:frontend
+VITE_API_URL= VITE_SOCKET_URL= VITE_ENV=production pnpm build:frontend
 
 log "Frontend built"
 

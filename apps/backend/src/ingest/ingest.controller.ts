@@ -7,13 +7,17 @@ import {
   HttpStatus,
   UnauthorizedException,
   PayloadTooLargeException,
-  ValidationPipe,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { validateOrReject } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
+import { timingSafeEqual } from 'crypto';
 import { Public } from '../auth/public.decorator';
 import { INGEST_QUEUE } from '../workers/workers.module';
 import { ApiKeysService } from '../api-keys/api-keys.service';
+import { IngestDataDto } from '../dtos/ingest.dto';
 
 @Public()
 @Controller('ingest')
@@ -26,11 +30,10 @@ export class IngestController {
   @Post()
   @HttpCode(HttpStatus.ACCEPTED)
   async ingest(
-    @Body(new ValidationPipe({ whitelist: false, transform: true }))
-    data: Record<string, unknown>,
+    @Body() rawBody: Record<string, unknown>,
     @Headers('x-api-key') apiKey: string,
   ) {
-    const serialized = JSON.stringify(data);
+    const serialized = JSON.stringify(rawBody);
     if (serialized.length > 1024 * 100) {
       throw new PayloadTooLargeException('Payload exceeds 100KB limit');
     }
@@ -38,10 +41,22 @@ export class IngestController {
       throw new UnauthorizedException('Missing x-api-key header');
     }
 
+    // Validate known fields while preserving unknown fields for raw storage
+    const dto = plainToInstance(IngestDataDto, rawBody);
+    try {
+      await validateOrReject(dto);
+    } catch (errors) {
+      throw new BadRequestException('Invalid ingest payload');
+    }
+
+    if (!dto.serverId) {
+      throw new BadRequestException('serverId is required');
+    }
+
     // Check master key first (env var)
     const masterKey = process.env.AGENT_API_KEY;
-    if (masterKey && apiKey === masterKey) {
-      await this.ingestQueue.add('metrics', data, {
+    if (masterKey && apiKey.length === masterKey.length && timingSafeEqual(Buffer.from(apiKey), Buffer.from(masterKey))) {
+      await this.ingestQueue.add('metrics', rawBody, {
         removeOnComplete: { age: 3600 },
       });
       return { accepted: true };
@@ -51,10 +66,10 @@ export class IngestController {
     const result = await this.apiKeys.validate(apiKey);
     if (result.valid) {
       // If key is scoped to a server, verify the data matches
-      if (result.serverId && data.serverId && data.serverId !== result.serverId) {
+      if (result.serverId && dto.serverId && dto.serverId !== result.serverId) {
         throw new UnauthorizedException('API key is not authorized for this server');
       }
-      await this.ingestQueue.add('metrics', data, {
+      await this.ingestQueue.add('metrics', rawBody, {
         removeOnComplete: { age: 3600 },
       });
       return { accepted: true };

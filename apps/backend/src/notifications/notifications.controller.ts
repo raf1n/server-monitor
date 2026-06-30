@@ -1,8 +1,12 @@
-import { Controller, Get, Param, Query, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Param, Query, ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { ListNotificationsQuery } from '../dtos/notifications.dto';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 
 @Controller('notifications')
+@Roles('admin')
+@UseGuards(RolesGuard)
 export class NotificationsController {
   constructor(private readonly notifications: NotificationsService) {}
 

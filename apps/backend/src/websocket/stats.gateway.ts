@@ -78,7 +78,7 @@ export class StatsGateway
   }
 
   handleConnection(client: Socket) {
-    // Extract JWT from cookie header (httpOnly cookie) or auth handshake (fallback)
+    // Extract JWT from httpOnly cookie only
     let token: string | undefined;
 
     const cookieHeader = client.handshake.headers.cookie;
@@ -87,18 +87,19 @@ export class StatsGateway
       if (match) token = decodeURIComponent(match[1]);
     }
 
-    // Fallback: auth handshake (for non-browser clients during migration)
-    if (!token) {
-      token = client.handshake.auth?.token;
-    }
-
     if (!token) {
       this.logger.warn(`Client ${client.id} disconnected — no token`);
       client.disconnect();
       return;
     }
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      this.logger.error(`Client ${client.id} disconnected — JWT_SECRET not set`);
+      client.disconnect();
+      return;
+    }
     try {
-      const payload = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+      const payload = jwt.verify(token, jwtSecret) as JwtPayload;
       client.data.user = {
         userId: payload.sub,
         username: payload.username,

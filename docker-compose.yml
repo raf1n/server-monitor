@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: timescale/timescaledb:latest-pg16
+    image: timescale/timescaledb:2.28.1-pg16
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -63,6 +63,7 @@ services:
       args:
         VITE_API_URL: http://localhost:3300
         VITE_SOCKET_URL: http://localhost:3300
+        VITE_ENV: development
     depends_on:
       - backend
     ports:

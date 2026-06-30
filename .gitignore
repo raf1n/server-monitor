@@ -3,6 +3,8 @@ dist/
 build/
 .env
 .env*.local
+apps/backend/.env
+apps/agent/.env
 *.tsbuildinfo
 .DS_Store
 *.pem

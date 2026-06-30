@@ -19,10 +19,8 @@ export const store = configureStore({
     socket: socketReducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware()
-      .concat(apiSlice.middleware)
-      .prepend(socketMiddleware.middleware),
-  devTools: { name: "ServerMonitor Store" },
+    getDefaultMiddleware().concat(apiSlice.middleware).prepend(socketMiddleware.middleware),
+  devTools: import.meta.env.VITE_ENV === "development" ? { name: "ServerMonitor Store" } : false,
 });
 
 export type RootState = ReturnType<typeof store.getState>;

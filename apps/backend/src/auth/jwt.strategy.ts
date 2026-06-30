@@ -31,10 +31,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     @InjectRepository(UserEntity)
     private readonly userRepo: Repository<UserEntity>,
   ) {
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET environment variable is required');
+    }
     super({
       jwtFromRequest: extractJwtFromRequest,
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET!,
+      secretOrKey: jwtSecret,
+      algorithms: ['HS256'],
     });
   }
 

@@ -4,6 +4,7 @@ import {
   MinLength,
   MaxLength,
   IsEmail,
+  Matches,
 } from 'class-validator';
 
 export class RegisterUserDto {
@@ -13,8 +14,12 @@ export class RegisterUserDto {
   username!: string;
 
   @IsString()
-  @MinLength(4)
+  @MinLength(8)
   @MaxLength(128)
+  @Matches(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/, {
+    message:
+      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+  })
   password!: string;
 
   @IsOptional()
@@ -39,7 +44,11 @@ export class UpdateProfileDto {
 
   @IsOptional()
   @IsString()
-  @MinLength(4)
+  @MinLength(8)
   @MaxLength(128)
+  @Matches(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/, {
+    message:
+      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+  })
   newPassword?: string;
 }

@@ -32,9 +32,10 @@ export class AgentDistributionController {
   async getInstallSh(@Req() req: Request, @Res() res: Response) {
     try {
       let file = await readFile(join(this.agentDistDir, 'install.sh'), 'utf-8');
-      const protocol = req.headers['x-forwarded-proto'] || req.protocol;
-      const host = req.headers['x-forwarded-host'] || req.headers.host;
-      const baseUrl = `${protocol}://${host}`;
+      const protocol = req.protocol;
+      const host = req.hostname;
+      const port = req.headers.host?.includes(':') ? `:${req.headers.host.split(':')[1]}` : '';
+      const baseUrl = `${protocol}://${host}${port}`;
       file = file.replace(/__BACKEND_URL__/g, baseUrl);
       res.send(file);
     } catch {

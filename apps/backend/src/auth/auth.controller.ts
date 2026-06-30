@@ -9,6 +9,7 @@ import {
   Req,
   Logger,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
 import { Public } from './public.decorator';
 import { AuthService } from './auth.service';
@@ -27,6 +28,7 @@ export class AuthController {
   ) {}
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() body: LoginDto, @Res({ passthrough: true }) res: Response) {

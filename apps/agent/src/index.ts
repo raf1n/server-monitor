@@ -23,7 +23,12 @@ function parseArgs() {
       config.apiKey = next;
       i++;
     } else if (arg === "--interval") {
-      config.interval = Number(next);
+      const val = Number(next);
+      if (isNaN(val) || val <= 0 || !isFinite(val)) {
+        console.error("Error: --interval must be a positive number");
+        process.exit(1);
+      }
+      config.interval = val;
       i++;
     } else if (arg === "--help" || arg === "-h") {
       console.log(`
@@ -51,8 +56,15 @@ Environment variables (fallback):
 const { serverId, apiUrl, apiKey, interval } = parseArgs();
 
 if (!apiKey) {
+  console.error("Error: API key is required. Set API_KEY env var.");
+  process.exit(1);
+}
+
+const isLocalhost =
+  /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/.test(apiUrl);
+if (!isLocalhost && !apiUrl.startsWith("https://")) {
   console.error(
-    "Error: API key is required. Set --key flag or API_KEY env var.",
+    "Error: API_URL must use HTTPS for non-localhost connections. Use https:// or http://localhost.",
   );
   process.exit(1);
 }
