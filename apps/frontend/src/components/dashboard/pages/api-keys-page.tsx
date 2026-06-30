@@ -1,12 +1,29 @@
 import { useState, useEffect, useCallback } from "react";
-import { Key, Plus, Copy, Trash2, ShieldOff, Check, AlertTriangle, Clock, Server } from "lucide-react";
+import {
+  Key,
+  Plus,
+  Copy,
+  Trash2,
+  ShieldOff,
+  Check,
+  AlertTriangle,
+  Clock,
+  Server,
+} from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface ApiKey {
   id: string;
@@ -19,7 +36,13 @@ interface ApiKey {
 }
 
 function formatDate(ts: string): string {
-  return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  return new Date(ts).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export function ApiKeysPage() {
@@ -43,7 +66,9 @@ export function ApiKeysPage() {
     }
   }, []);
 
-  useEffect(() => { fetchKeys(); }, [fetchKeys]);
+  useEffect(() => {
+    fetchKeys();
+  }, [fetchKeys]);
 
   const handleCreate = async () => {
     setCreating(true);
@@ -108,7 +133,13 @@ export function ApiKeysPage() {
             Manage agent authentication keys. Each key can be scoped to a specific server.
           </p>
         </div>
-        <Button onClick={() => { setGeneratedKey(null); setCreateOpen(true); }} className="gap-2">
+        <Button
+          onClick={() => {
+            setGeneratedKey(null);
+            setCreateOpen(true);
+          }}
+          className="gap-2"
+        >
           <Plus className="h-4 w-4" /> Create Key
         </Button>
       </div>
@@ -155,8 +186,16 @@ export function ApiKeysPage() {
         <Card className="p-12 text-center">
           <Key className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
           <p className="text-lg font-medium text-foreground">No API keys yet</p>
-          <p className="text-sm text-muted-foreground mt-1">Create a key to let agents authenticate with your server.</p>
-          <Button onClick={() => { setGeneratedKey(null); setCreateOpen(true); }} className="mt-4 gap-2">
+          <p className="text-sm text-muted-foreground mt-1">
+            Create a key to let agents authenticate with your server.
+          </p>
+          <Button
+            onClick={() => {
+              setGeneratedKey(null);
+              setCreateOpen(true);
+            }}
+            className="mt-4 gap-2"
+          >
             <Plus className="h-4 w-4" /> Create your first key
           </Button>
         </Card>
@@ -166,7 +205,9 @@ export function ApiKeysPage() {
             <Card key={key.id} className={`p-4 ${key.revoked ? "opacity-60" : ""}`}>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${key.revoked ? "bg-muted text-muted-foreground" : "bg-primary/15 text-primary"}`}>
+                  <div
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${key.revoked ? "bg-muted text-muted-foreground" : "bg-primary/15 text-primary"}`}
+                  >
                     <Key className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
@@ -175,9 +216,16 @@ export function ApiKeysPage() {
                         sm_{key.keyPrefix}****
                       </code>
                       {key.revoked ? (
-                        <Badge variant="destructive" className="text-[10px]">Revoked</Badge>
+                        <Badge variant="destructive" className="text-[10px]">
+                          Revoked
+                        </Badge>
                       ) : (
-                        <Badge variant="default" className="text-[10px] bg-success text-success-foreground">Active</Badge>
+                        <Badge
+                          variant="default"
+                          className="text-[10px] bg-success text-success-foreground"
+                        >
+                          Active
+                        </Badge>
                       )}
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
@@ -187,23 +235,33 @@ export function ApiKeysPage() {
                           <Server className="h-3 w-3" /> {key.serverId}
                         </span>
                       )}
-                      {!key.serverId && <span className="text-muted-foreground/70">All servers</span>}
+                      {!key.serverId && (
+                        <span className="text-muted-foreground/70">All servers</span>
+                      )}
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" /> {formatDate(key.createdAt)}
                       </span>
-                      {key.lastUsedAt && (
-                        <span>Last used {formatDate(key.lastUsedAt)}</span>
-                      )}
+                      {key.lastUsedAt && <span>Last used {formatDate(key.lastUsedAt)}</span>}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {!key.revoked && (
-                    <Button variant="outline" size="sm" onClick={() => handleRevoke(key.id)} className="gap-1.5 text-xs">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRevoke(key.id)}
+                      className="gap-1.5 text-xs"
+                    >
                       <ShieldOff className="h-3.5 w-3.5" /> Revoke
                     </Button>
                   )}
-                  <Button variant="ghost" size="sm" onClick={() => handleDelete(key.id)} className="gap-1.5 text-xs text-destructive hover:text-destructive">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(key.id)}
+                    className="gap-1.5 text-xs text-destructive hover:text-destructive"
+                  >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
@@ -248,7 +306,9 @@ export function ApiKeysPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setCreateOpen(false)}>
+                  Cancel
+                </Button>
                 <Button onClick={handleCreate} disabled={creating}>
                   {creating ? "Creating..." : "Generate Key"}
                 </Button>
@@ -274,12 +334,21 @@ export function ApiKeysPage() {
                     {generatedKey}
                   </code>
                   <Button variant="outline" size="icon" onClick={handleCopy} className="shrink-0">
-                    {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+                    {copied ? (
+                      <Check className="h-4 w-4 text-success" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={() => { setCreateOpen(false); setGeneratedKey(null); }}>
+                <Button
+                  onClick={() => {
+                    setCreateOpen(false);
+                    setGeneratedKey(null);
+                  }}
+                >
                   Done
                 </Button>
               </DialogFooter>

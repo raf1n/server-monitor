@@ -59,10 +59,7 @@ export const alertsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Alerts"],
     }),
-    acknowledgeAllAlerts: build.mutation<
-      { success: boolean; count: number },
-      string | undefined
-    >({
+    acknowledgeAllAlerts: build.mutation<{ success: boolean; count: number }, string | undefined>({
       query: (serverId) => {
         const q = serverId ? `?serverId=${serverId}` : "";
         return { url: `/alerts/acknowledge-all${q}`, method: "PATCH" };

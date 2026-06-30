@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NotificationEntity } from '../database/entities/notification.entity';
+import { SettingsService } from '../settings/settings.service';
 
 @Injectable()
 export class NotificationsService {
@@ -10,6 +11,7 @@ export class NotificationsService {
   constructor(
     @InjectRepository(NotificationEntity)
     private readonly notificationRepo: Repository<NotificationEntity>,
+    private readonly settingsService: SettingsService,
   ) {}
 
   async findAll(params: {
@@ -98,10 +100,7 @@ export class NotificationsService {
         break;
       default:
         this.logger.warn(`Unknown notification type: ${notification.type}`);
-        await this.markFailed(
-          notification.id,
-          `Unknown type: ${notification.type}`,
-        );
+        await this.markFailed(notification.id, `Unknown type: ${notification.type}`);
         return;
     }
   }
@@ -152,14 +151,10 @@ export class NotificationsService {
 
   private async sendDiscord(notification: NotificationEntity): Promise<void> {
     try {
-      const url =
-        notification.destination || process.env.NOTIFICATION_DISCORD_WEBHOOK;
+      const url = notification.destination || process.env.NOTIFICATION_DISCORD_WEBHOOK;
       if (!url) {
         this.logger.warn('Discord webhook not configured');
-        await this.markFailed(
-          notification.id,
-          'Discord webhook not configured',
-        );
+        await this.markFailed(notification.id, 'Discord webhook not configured');
         return;
       }
 
@@ -218,18 +213,15 @@ export class NotificationsService {
       }
 
       const text = `*${notification.title}*\n${notification.message}\nSeverity: ${notification.severity}`;
-      const response = await fetch(
-        `https://api.telegram.org/bot${botToken}/sendMessage`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text,
-            parse_mode: 'Markdown',
-          }),
-        },
-      );
+      const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text,
+          parse_mode: 'Markdown',
+        }),
+      });
 
       if (!response.ok) {
         throw new Error(`Telegram API returned ${response.status}`);
@@ -255,28 +247,55 @@ export class NotificationsService {
   private async getNotificationDestinations(
     serverId?: string,
   ): Promise<Array<{ type: string; destination?: string }>> {
+    const read = async (key: string): Promise<string | null> => {
+      return this.settingsService.getWithFallback(key, serverId);
+    };
+
     const destinations: Array<{ type: string; destination?: string }> = [];
 
-    if (process.env.NOTIFICATION_EMAIL) {
+    // Email — DB setting first, env var fallback
+    const email = await read('notification.email');
+    if (email) {
+      destinations.push({ type: 'email', destination: email });
+    } else if (process.env.NOTIFICATION_EMAIL) {
       destinations.push({
         type: 'email',
         destination: process.env.NOTIFICATION_EMAIL,
       });
     }
-    if (process.env.WEBHOOK_URL) {
+
+    // Webhook — DB setting first, env var fallback
+    const webhook = await read('notification.webhook');
+    if (webhook) {
+      destinations.push({ type: 'webhook', destination: webhook });
+    } else if (process.env.WEBHOOK_URL) {
       destinations.push({
         type: 'webhook',
         destination: process.env.WEBHOOK_URL,
       });
     }
-    if (process.env.NOTIFICATION_DISCORD_WEBHOOK) {
+
+    // Discord — DB setting first, env var fallback
+    const discord = await read('notification.discord');
+    if (discord) {
+      destinations.push({ type: 'discord', destination: discord });
+    } else if (process.env.NOTIFICATION_DISCORD_WEBHOOK) {
       destinations.push({
         type: 'discord',
         destination: process.env.NOTIFICATION_DISCORD_WEBHOOK,
       });
     }
-    if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
-      destinations.push({ type: 'telegram' });
+
+    // Telegram — DB settings first, env var fallback
+    const telegramBot = await read('notification.telegram.bot_token');
+    const telegramChat = await read('notification.telegram.chat_id');
+    if (telegramBot && telegramChat) {
+      destinations.push({ type: 'telegram', destination: telegramChat });
+    } else if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
+      destinations.push({
+        type: 'telegram',
+        destination: process.env.TELEGRAM_CHAT_ID,
+      });
     }
 
     return destinations;

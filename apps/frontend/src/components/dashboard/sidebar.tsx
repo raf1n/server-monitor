@@ -50,10 +50,7 @@ export function Sidebar({ mobileOpen = false, onMobileToggle }: SidebarProps) {
   return (
     <>
       {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={onMobileToggle}
-        />
+        <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={onMobileToggle} />
       )}
 
       <aside
@@ -72,20 +69,11 @@ export function Sidebar({ mobileOpen = false, onMobileToggle }: SidebarProps) {
           )}
           {!collapsed && (
             <div className="flex flex-col leading-tight">
-              <span className="text-sm font-semibold text-foreground">
-                Server Monitor
-              </span>
-              <span className="text-[11px] text-muted-foreground">
-                {__APP_VERSION__}
-              </span>
+              <span className="text-sm font-semibold text-foreground">Server Monitor</span>
+              <span className="text-[11px] text-muted-foreground">{__APP_VERSION__}</span>
             </div>
           )}
-          <div
-            className={cn(
-              "flex items-center gap-1",
-              collapsed ? "mx-auto" : "ml-auto",
-            )}
-          >
+          <div className={cn("flex items-center gap-1", collapsed ? "mx-auto" : "ml-auto")}>
             {onMobileToggle && (
               <Button
                 variant="ghost"
@@ -138,9 +126,7 @@ export function Sidebar({ mobileOpen = false, onMobileToggle }: SidebarProps) {
                 title={collapsed ? item.label : undefined}
               >
                 <Icon className="h-[18px] w-[18px] shrink-0" />
-                {!collapsed && (
-                  <span className="flex-1 text-left">{item.label}</span>
-                )}
+                {!collapsed && <span className="flex-1 text-left">{item.label}</span>}
                 {!collapsed && badge ? (
                   <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[11px] font-semibold text-destructive-foreground">
                     {badge > 99 ? "99+" : badge}
@@ -167,9 +153,7 @@ export function Sidebar({ mobileOpen = false, onMobileToggle }: SidebarProps) {
             </div>
             {!collapsed && (
               <div className="flex flex-col leading-tight">
-                <span className="text-[11px] text-muted-foreground">
-                  Reporting active
-                </span>
+                <span className="text-[11px] text-muted-foreground">Reporting active</span>
               </div>
             )}
           </div>

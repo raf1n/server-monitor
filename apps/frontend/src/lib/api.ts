@@ -56,18 +56,12 @@ export const api = {
         }>
       >(`/alerts${q.toString() ? `?${q}` : ""}`);
     },
-    count: (params?: {
-      serverId?: string;
-      acknowledged?: string;
-      severity?: string;
-    }) => {
+    count: (params?: { serverId?: string; acknowledged?: string; severity?: string }) => {
       const q = new URLSearchParams();
       if (params?.serverId) q.set("serverId", params.serverId);
       if (params?.acknowledged) q.set("acknowledged", params.acknowledged);
       if (params?.severity) q.set("severity", params.severity);
-      return request<{ count: number }>(
-        `/alerts/count${q.toString() ? `?${q}` : ""}`,
-      );
+      return request<{ count: number }>(`/alerts/count${q.toString() ? `?${q}` : ""}`);
     },
     acknowledge: (id: string) =>
       request<{ success: boolean }>(`/alerts/${id}/acknowledge`, {
@@ -75,13 +69,11 @@ export const api = {
       }),
     acknowledgeAll: (serverId?: string) => {
       const q = serverId ? `?serverId=${serverId}` : "";
-      return request<{ success: boolean; count: number }>(
-        `/alerts/acknowledge-all${q}`,
-        { method: "PATCH" },
-      );
+      return request<{ success: boolean; count: number }>(`/alerts/acknowledge-all${q}`, {
+        method: "PATCH",
+      });
     },
-    delete: (id: string) =>
-      request<void>(`/alerts/${id}`, { method: "DELETE" }),
+    delete: (id: string) => request<void>(`/alerts/${id}`, { method: "DELETE" }),
   },
   settings: {
     getAll: (serverId?: string) => {
@@ -104,9 +96,27 @@ export const api = {
       request<ProcessInfo[]>(`/servers/${serverId}/processes`, { signal }),
   },
   users: {
-    me: () => request<{ id: string; username: string; email?: string; createdAt: string; updatedAt: string }>("/users/me"),
-    update: (data: { username?: string; email?: string; currentPassword?: string; newPassword?: string }) =>
-      request<{ id: string; username: string; email?: string; createdAt: string; updatedAt: string }>("/users/me", {
+    me: () =>
+      request<{
+        id: string;
+        username: string;
+        email?: string;
+        createdAt: string;
+        updatedAt: string;
+      }>("/users/me"),
+    update: (data: {
+      username?: string;
+      email?: string;
+      currentPassword?: string;
+      newPassword?: string;
+    }) =>
+      request<{
+        id: string;
+        username: string;
+        email?: string;
+        createdAt: string;
+        updatedAt: string;
+      }>("/users/me", {
         method: "PATCH",
         body: JSON.stringify(data),
       }),
@@ -134,23 +144,31 @@ export const api = {
   },
   apiKeys: {
     list: () =>
-      request<Array<{
+      request<
+        Array<{
+          id: string;
+          keyPrefix: string;
+          serverId?: string;
+          label?: string;
+          revoked: boolean;
+          lastUsedAt?: string;
+          createdAt: string;
+        }>
+      >("/api-keys"),
+    create: (data?: { serverId?: string; label?: string }) =>
+      request<{
         id: string;
+        key: string;
         keyPrefix: string;
         serverId?: string;
         label?: string;
-        revoked: boolean;
-        lastUsedAt?: string;
         createdAt: string;
-      }>>("/api-keys"),
-    create: (data?: { serverId?: string; label?: string }) =>
-      request<{ id: string; key: string; keyPrefix: string; serverId?: string; label?: string; createdAt: string }>("/api-keys", {
+      }>("/api-keys", {
         method: "POST",
         body: JSON.stringify(data || {}),
       }),
     revoke: (id: string) =>
       request<{ revoked: boolean }>(`/api-keys/${id}/revoke`, { method: "POST" }),
-    delete: (id: string) =>
-      request<void>(`/api-keys/${id}`, { method: "DELETE" }),
+    delete: (id: string) => request<void>(`/api-keys/${id}`, { method: "DELETE" }),
   },
 };

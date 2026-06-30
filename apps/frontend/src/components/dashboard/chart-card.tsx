@@ -1,4 +1,3 @@
-
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -20,7 +19,9 @@ export function ChartCard({
   action,
 }: ChartCardProps) {
   return (
-    <div className={cn("flex flex-col rounded-lg border border-border bg-card shadow-sm", className)}>
+    <div
+      className={cn("flex flex-col rounded-lg border border-border bg-card shadow-sm", className)}
+    >
       <div className="flex items-center justify-between border-b border-border px-5 py-4">
         <div className="flex flex-col gap-0.5">
           <h3 className="text-sm font-semibold text-foreground">{title}</h3>
@@ -29,11 +30,7 @@ export function ChartCard({
         {action}
       </div>
       <div className="flex-1 p-4">
-        {loading ? (
-          <Skeleton className="h-[220px] w-full" />
-        ) : (
-          children
-        )}
+        {loading ? <Skeleton className="h-[220px] w-full" /> : children}
       </div>
     </div>
   );

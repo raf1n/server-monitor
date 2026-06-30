@@ -110,6 +110,14 @@ export class SettingsService implements OnModuleDestroy {
     }
   }
 
+  async getWithFallback(key: string, serverId?: string): Promise<string | null> {
+    if (serverId) {
+      const perServer = await this.get(key, serverId);
+      if (perServer !== null) return perServer;
+    }
+    return this.get(key, undefined);
+  }
+
   invalidateCache(key: string, serverId?: string): void {
     this.cache.delete(this.cacheKey(key, serverId));
   }

@@ -8,7 +8,9 @@ import { Separator } from "@/components/ui/separator";
 import { api } from "@/lib/api";
 
 export function ProfilePage() {
-  const [profile, setProfile] = useState<{ id: string; username: string; email?: string } | null>(null);
+  const [profile, setProfile] = useState<{ id: string; username: string; email?: string } | null>(
+    null,
+  );
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -18,7 +20,8 @@ export function ProfilePage() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
-    api.users.me()
+    api.users
+      .me()
       .then((data) => {
         setProfile(data);
         setUsername(data.username);
@@ -67,7 +70,9 @@ export function ProfilePage() {
           </div>
           <div>
             <h3 className="text-sm font-semibold text-foreground">Account</h3>
-            <p className="text-xs text-muted-foreground">Update your username, email, and password</p>
+            <p className="text-xs text-muted-foreground">
+              Update your username, email, and password
+            </p>
           </div>
         </div>
 
@@ -79,23 +84,47 @@ export function ProfilePage() {
 
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" />
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+            />
           </div>
 
           <Separator />
 
           <div className="space-y-2">
             <Label htmlFor="currentPassword">Current Password</Label>
-            <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Required to change password" />
+            <Input
+              id="currentPassword"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Required to change password"
+            />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="newPassword">New Password</Label>
-            <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Leave blank to keep current" />
+            <Input
+              id="newPassword"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Leave blank to keep current"
+            />
           </div>
 
           {message && (
-            <p className={message.type === "success" ? "text-sm text-success" : "text-sm text-destructive"}>{message.text}</p>
+            <p
+              className={
+                message.type === "success" ? "text-sm text-success" : "text-sm text-destructive"
+              }
+            >
+              {message.text}
+            </p>
           )}
 
           <Button onClick={handleSave} disabled={saving} className="gap-1.5">

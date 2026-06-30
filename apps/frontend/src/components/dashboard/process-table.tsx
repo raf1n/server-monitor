@@ -1,12 +1,5 @@
 import { useMemo, useState } from "react";
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  Loader2,
-  Search,
-  Workflow,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Loader2, Search, Workflow } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -42,8 +35,7 @@ const STATUS_BADGE: Record<
   online: {
     label: "online",
     variant: "default",
-    className:
-      "bg-success/15 text-success border-success/30 hover:bg-success/20",
+    className: "bg-success/15 text-success border-success/30 hover:bg-success/20",
   },
   stopped: {
     label: "stopped",
@@ -121,8 +113,7 @@ export function ProcessTable({
     list.sort((a, b) => {
       let cmp = 0;
       if (sortKey === "name") cmp = a.name.localeCompare(b.name);
-      else if (sortKey === "source")
-        cmp = (a.source || "").localeCompare(b.source || "");
+      else if (sortKey === "source") cmp = (a.source || "").localeCompare(b.source || "");
       else if (sortKey === "status") cmp = a.status.localeCompare(b.status);
       else if (sortKey === "uptime") cmp = a.uptime - b.uptime;
       else cmp = (a[sortKey] as number) - (b[sortKey] as number);
@@ -141,13 +132,8 @@ export function ProcessTable({
   };
 
   const SortIcon = ({ column }: { column: SortKey }) => {
-    if (sortKey !== column)
-      return <ArrowUpDown className="h-3 w-3 opacity-40" />;
-    return sortDir === "asc" ? (
-      <ArrowUp className="h-3 w-3" />
-    ) : (
-      <ArrowDown className="h-3 w-3" />
-    );
+    if (sortKey !== column) return <ArrowUpDown className="h-3 w-3 opacity-40" />;
+    return sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />;
   };
 
   if (loading) {
@@ -168,10 +154,7 @@ export function ProcessTable({
 
   return (
     <div
-      className={cn(
-        "rounded-lg border border-border bg-card shadow-sm",
-        compactMode && "text-xs",
-      )}
+      className={cn("rounded-lg border border-border bg-card shadow-sm", compactMode && "text-xs")}
     >
       <div
         className={cn(
@@ -199,11 +182,7 @@ export function ProcessTable({
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {v === "pm2"
-                  ? "PM2"
-                  : v === "cpu"
-                    ? "CPU"
-                    : v.charAt(0).toUpperCase() + v.slice(1)}
+                {v === "pm2" ? "PM2" : v === "cpu" ? "CPU" : v.charAt(0).toUpperCase() + v.slice(1)}
               </button>
             ))}
           </div>
@@ -223,22 +202,14 @@ export function ProcessTable({
       {filtered.length === 0 && !hasServer ? (
         <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
           <Loader2 className="h-8 w-8 text-muted-foreground/30" />
-          <p className="text-sm font-medium text-muted-foreground">
-            Waiting for agent data
-          </p>
-          <p className="text-xs text-muted-foreground/70">
-            Run an agent to see processes
-          </p>
+          <p className="text-sm font-medium text-muted-foreground">Waiting for agent data</p>
+          <p className="text-xs text-muted-foreground/70">Run an agent to see processes</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
           <Workflow className="h-8 w-8 text-muted-foreground/50" />
-          <p className="text-sm font-medium text-muted-foreground">
-            No processes found
-          </p>
-          <p className="text-xs text-muted-foreground/70">
-            Try adjusting your search filter
-          </p>
+          <p className="text-sm font-medium text-muted-foreground">No processes found</p>
+          <p className="text-xs text-muted-foreground/70">Try adjusting your search filter</p>
         </div>
       ) : (
         <Table>
@@ -273,8 +244,7 @@ export function ProcessTable({
                   onClick={() => toggleSort("cpu")}
                   className="flex w-full items-center justify-end gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground"
                 >
-                  {viewFilter === "memory" ? "Memory %" : "CPU"}{" "}
-                  <SortIcon column="cpu" />
+                  {viewFilter === "memory" ? "Memory %" : "CPU"} <SortIcon column="cpu" />
                 </button>
               </TableHead>
               <TableHead className="text-right">
@@ -298,8 +268,7 @@ export function ProcessTable({
           <TableBody>
             {filtered.map((proc) => {
               const badge = STATUS_BADGE[proc.status] ?? STATUS_BADGE.online;
-              const sourceBadge =
-                SOURCE_BADGE[proc.source || "system"] ?? SOURCE_BADGE.system;
+              const sourceBadge = SOURCE_BADGE[proc.source || "system"] ?? SOURCE_BADGE.system;
               return (
                 <TableRow
                   key={proc.id}
@@ -322,10 +291,7 @@ export function ProcessTable({
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={cn("gap-1.5 capitalize", badge.className)}
-                    >
+                    <Badge variant="outline" className={cn("gap-1.5 capitalize", badge.className)}>
                       <span
                         className={cn(
                           "h-1.5 w-1.5 rounded-full",
@@ -343,15 +309,10 @@ export function ProcessTable({
                     className={cn(
                       "text-right font-mono tabular-nums",
                       compactMode ? "text-xs" : "text-sm",
-                      cpuColor(
-                        viewFilter === "memory" ? proc.memory : proc.cpu,
-                      ),
+                      cpuColor(viewFilter === "memory" ? proc.memory : proc.cpu),
                     )}
                   >
-                    {viewFilter === "memory"
-                      ? proc.memory.toFixed(1)
-                      : proc.cpu.toFixed(1)}
-                    %
+                    {viewFilter === "memory" ? proc.memory.toFixed(1) : proc.cpu.toFixed(1)}%
                   </TableCell>
                   <TableCell
                     className={cn(

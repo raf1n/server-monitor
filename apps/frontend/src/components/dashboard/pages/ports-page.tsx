@@ -1,10 +1,4 @@
-import {
-  GlobeLock,
-  Loader2,
-  Radio,
-  ShieldHalf,
-  Waypoints,
-} from "lucide-react";
+import { GlobeLock, Loader2, Radio, ShieldHalf, Waypoints } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppSelector } from "@/store";
@@ -24,9 +18,7 @@ export function PortsPage() {
 
   const totalCount = ports.length;
   const privilegedCount = ports.filter((p) => p.localPort < 1024).length;
-  const registeredCount = ports.filter(
-    (p) => p.localPort >= 1024 && p.localPort < 49152,
-  ).length;
+  const registeredCount = ports.filter((p) => p.localPort >= 1024 && p.localPort < 49152).length;
   const dynamicCount = ports.filter((p) => p.localPort >= 49152).length;
 
   if (loading) {
@@ -50,14 +42,10 @@ export function PortsPage() {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
         <Loader2 className="h-10 w-10 animate-spin text-muted-foreground/40" />
-        <h2 className="text-base font-semibold text-foreground">
-          Waiting for an agent to connect
-        </h2>
+        <h2 className="text-base font-semibold text-foreground">Waiting for an agent to connect</h2>
         <p className="text-sm text-muted-foreground">
           Start the backend and run{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
-            pnpm dev:agent
-          </code>{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">pnpm dev:agent</code>{" "}
           to see listening ports.
         </p>
       </div>
@@ -79,9 +67,7 @@ export function PortsPage() {
             <Radio className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <p className="text-2xl font-semibold text-foreground">
-              {totalCount}
-            </p>
+            <p className="text-2xl font-semibold text-foreground">{totalCount}</p>
             <p className="text-xs text-muted-foreground">Total Listening</p>
           </div>
         </Card>
@@ -90,9 +76,7 @@ export function PortsPage() {
             <GlobeLock className="h-5 w-5 text-destructive" />
           </div>
           <div>
-            <p className="text-2xl font-semibold text-foreground">
-              {privilegedCount}
-            </p>
+            <p className="text-2xl font-semibold text-foreground">{privilegedCount}</p>
             <p className="text-xs text-muted-foreground">Privileged ({"<"}1024)</p>
           </div>
         </Card>
@@ -101,9 +85,7 @@ export function PortsPage() {
             <ShieldHalf className="h-5 w-5 text-warning" />
           </div>
           <div>
-            <p className="text-2xl font-semibold text-foreground">
-              {registeredCount}
-            </p>
+            <p className="text-2xl font-semibold text-foreground">{registeredCount}</p>
             <p className="text-xs text-muted-foreground">Registered (1024–49151)</p>
           </div>
         </Card>
@@ -112,9 +94,7 @@ export function PortsPage() {
             <Waypoints className="h-5 w-5 text-muted-foreground" />
           </div>
           <div>
-            <p className="text-2xl font-semibold text-foreground">
-              {dynamicCount}
-            </p>
+            <p className="text-2xl font-semibold text-foreground">{dynamicCount}</p>
             <p className="text-xs text-muted-foreground">Dynamic (49152+)</p>
           </div>
         </Card>
@@ -123,19 +103,13 @@ export function PortsPage() {
       {ports.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card py-16 text-center">
           <Waypoints className="h-8 w-8 text-muted-foreground/50" />
-          <p className="text-sm font-medium text-muted-foreground">
-            No ports found
-          </p>
+          <p className="text-sm font-medium text-muted-foreground">No ports found</p>
           <p className="text-xs text-muted-foreground/70">
             No listening ports detected on this server
           </p>
         </div>
       ) : (
-        <PortsTable
-          ports={ports}
-          loading={false}
-          compactMode={compactMode}
-        />
+        <PortsTable ports={ports} loading={false} compactMode={compactMode} />
       )}
     </div>
   );

@@ -1,11 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 
-export type ConnectionState =
-  | "connecting"
-  | "connected"
-  | "disconnected"
-  | "demo";
+export type ConnectionState = "connecting" | "connected" | "disconnected" | "demo";
 
 export interface SocketState {
   connection: ConnectionState;

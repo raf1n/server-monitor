@@ -1,11 +1,5 @@
 import { useMemo, useState } from "react";
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  Search,
-  Waypoints,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Search, Waypoints } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -35,11 +29,7 @@ function portColor(port: number): string {
   return "text-foreground";
 }
 
-export function PortsTable({
-  ports,
-  loading = false,
-  compactMode = false,
-}: PortsTableProps) {
+export function PortsTable({ ports, loading = false, compactMode = false }: PortsTableProps) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("localPort");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
@@ -67,10 +57,8 @@ export function PortsTable({
       let cmp = 0;
       if (sortKey === "localPort") cmp = a.localPort - b.localPort;
       else if (sortKey === "pid") cmp = (a.pid ?? -1) - (b.pid ?? -1);
-      else if (sortKey === "localAddress")
-        cmp = a.localAddress.localeCompare(b.localAddress);
-      else if (sortKey === "protocol")
-        cmp = a.protocol.localeCompare(b.protocol);
+      else if (sortKey === "localAddress") cmp = a.localAddress.localeCompare(b.localAddress);
+      else if (sortKey === "protocol") cmp = a.protocol.localeCompare(b.protocol);
       else cmp = a.process.localeCompare(b.process);
       return sortDir === "asc" ? cmp : -cmp;
     });
@@ -87,13 +75,8 @@ export function PortsTable({
   };
 
   const SortIcon = ({ column }: { column: SortKey }) => {
-    if (sortKey !== column)
-      return <ArrowUpDown className="h-3 w-3 opacity-40" />;
-    return sortDir === "asc" ? (
-      <ArrowUp className="h-3 w-3" />
-    ) : (
-      <ArrowDown className="h-3 w-3" />
-    );
+    if (sortKey !== column) return <ArrowUpDown className="h-3 w-3 opacity-40" />;
+    return sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />;
   };
 
   const protocols = useMemo(() => {
@@ -102,9 +85,7 @@ export function PortsTable({
   }, [ports]);
 
   const privilegedCount = ports.filter((p) => p.localPort < 1024).length;
-  const registeredCount = ports.filter(
-    (p) => p.localPort >= 1024 && p.localPort < 49152,
-  ).length;
+  const registeredCount = ports.filter((p) => p.localPort >= 1024 && p.localPort < 49152).length;
   const dynamicCount = ports.filter((p) => p.localPort >= 49152).length;
 
   if (loading) {
@@ -129,10 +110,7 @@ export function PortsTable({
 
   return (
     <div
-      className={cn(
-        "rounded-lg border border-border bg-card shadow-sm",
-        compactMode && "text-xs",
-      )}
+      className={cn("rounded-lg border border-border bg-card shadow-sm", compactMode && "text-xs")}
     >
       <div
         className={cn(
@@ -142,9 +120,7 @@ export function PortsTable({
       >
         <div className="flex items-center gap-2">
           <Waypoints className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold text-foreground">
-            Listening Ports
-          </h3>
+          <h3 className="text-sm font-semibold text-foreground">Listening Ports</h3>
           <Badge variant="secondary" className="text-[10px]">
             {filtered.length}
           </Badge>
@@ -188,25 +164,20 @@ export function PortsTable({
           <span className="flex h-2 w-2 rounded-full bg-destructive" />
           <span className="text-xs text-muted-foreground">
             Privileged (1–1023):{" "}
-            <span className="font-medium text-foreground">
-              {privilegedCount}
-            </span>
+            <span className="font-medium text-foreground">{privilegedCount}</span>
           </span>
         </div>
         <div className="flex items-center gap-2">
           <span className="flex h-2 w-2 rounded-full bg-warning" />
           <span className="text-xs text-muted-foreground">
             Registered (1024–49151):{" "}
-            <span className="font-medium text-foreground">
-              {registeredCount}
-            </span>
+            <span className="font-medium text-foreground">{registeredCount}</span>
           </span>
         </div>
         <div className="flex items-center gap-2">
           <span className="flex h-2 w-2 rounded-full bg-foreground/30" />
           <span className="text-xs text-muted-foreground">
-            Dynamic (49152+):{" "}
-            <span className="font-medium text-foreground">{dynamicCount}</span>
+            Dynamic (49152+): <span className="font-medium text-foreground">{dynamicCount}</span>
           </span>
         </div>
       </div>
@@ -260,10 +231,7 @@ export function PortsTable({
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="py-12 text-center text-sm text-muted-foreground"
-                >
+                <TableCell colSpan={5} className="py-12 text-center text-sm text-muted-foreground">
                   <div className="flex flex-col items-center gap-2">
                     <Waypoints className="h-8 w-8 text-muted-foreground/50" />
                     <p className="font-medium">No ports match your filter</p>
@@ -285,15 +253,10 @@ export function PortsTable({
                       compactMode ? "pl-3 text-xs" : "pl-5 text-sm",
                     )}
                   >
-                    <span className={portColor(port.localPort)}>
-                      {port.localPort}
-                    </span>
+                    <span className={portColor(port.localPort)}>{port.localPort}</span>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant="outline"
-                      className="font-mono text-[10px] uppercase"
-                    >
+                    <Badge variant="outline" className="font-mono text-[10px] uppercase">
                       {port.protocol}
                     </Badge>
                   </TableCell>
@@ -302,9 +265,7 @@ export function PortsTable({
                   </TableCell>
                   <TableCell className="text-foreground">
                     {port.process || (
-                      <span className="italic text-muted-foreground/60">
-                        unknown
-                      </span>
+                      <span className="italic text-muted-foreground/60">unknown</span>
                     )}
                   </TableCell>
                   <TableCell className="pr-5 text-right font-mono text-xs text-muted-foreground">

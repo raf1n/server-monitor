@@ -2,8 +2,11 @@ import { apiSlice } from "@/store/base-api";
 
 const settingsApi = apiSlice.injectEndpoints({
   endpoints: (build) => ({
-    getSettings: build.query<Record<string, string>, void>({
-      query: () => "/settings",
+    getSettings: build.query<Record<string, string>, string | void>({
+      query: (serverId) => {
+        const params = serverId ? `?serverId=${serverId}` : "";
+        return `/settings${params}`;
+      },
       providesTags: ["Settings"],
     }),
     saveSettings: build.mutation<

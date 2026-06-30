@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -13,6 +14,7 @@ export class ApiKeyEntity {
   id!: string;
 
   @Column()
+  @Exclude()
   keyHash!: string;
 
   @Column({ length: 8 })

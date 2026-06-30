@@ -5,7 +5,6 @@ import {
   Delete,
   Param,
   Query,
-  Body,
   Logger,
   HttpCode,
   HttpStatus,
@@ -13,7 +12,6 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { AlertsService, Thresholds } from './alerts.service';
-import { AlertEntity } from '../database/entities/alert.entity';
 import { ListAlertsQuery, CountAlertsQuery, AcknowledgeAllAlertsQuery } from '../dtos/alerts.dto';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -49,8 +47,8 @@ export class AlertsController {
   }
 
   @Get('thresholds')
-  async thresholds(): Promise<Thresholds> {
-    return this.alerts.loadThresholds();
+  async thresholds(@Query('serverId') serverId?: string): Promise<Thresholds> {
+    return this.alerts.loadThresholds(serverId);
   }
 
   @Get(':id')

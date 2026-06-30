@@ -25,30 +25,20 @@ const statsSlice = createSlice({
       state.chartHistory = action.payload;
     },
     appendToChartHistory(state, action: PayloadAction<MetricPoint>) {
-      state.chartHistory = [
-        ...state.chartHistory.slice(-(HISTORY_BUFFER - 1)),
-        action.payload,
-      ];
+      state.chartHistory = [...state.chartHistory.slice(-(HISTORY_BUFFER - 1)), action.payload];
     },
   },
   extraReducers: (builder) => {
-    builder.addMatcher(
-      statsApi.endpoints.getStatsHistory.matchFulfilled,
-      (state, action) => {
-        if (Array.isArray(action.payload) && action.payload.length > 0) {
-          state.chartHistory = action.payload;
-        }
-      },
-    );
-    builder.addMatcher(
-      statsApi.endpoints.getLatestStats.matchFulfilled,
-      (state, action) => {
-        state.stats = action.payload;
-      },
-    );
+    builder.addMatcher(statsApi.endpoints.getStatsHistory.matchFulfilled, (state, action) => {
+      if (Array.isArray(action.payload) && action.payload.length > 0) {
+        state.chartHistory = action.payload;
+      }
+    });
+    builder.addMatcher(statsApi.endpoints.getLatestStats.matchFulfilled, (state, action) => {
+      state.stats = action.payload;
+    });
   },
 });
 
-export const { setStats, setChartHistory, appendToChartHistory } =
-  statsSlice.actions;
+export const { setStats, setChartHistory, appendToChartHistory } = statsSlice.actions;
 export default statsSlice.reducer;

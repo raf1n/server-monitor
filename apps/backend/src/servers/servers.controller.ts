@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  Logger,
-  Optional,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, Logger, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan } from 'typeorm';
 import { ServersService } from './servers.service';
@@ -45,9 +38,7 @@ export class ServersController {
       });
       return snapshot?.processes || [];
     } catch (err) {
-      this.logger.error(
-        `Failed to fetch processes for ${serverId}: ${(err as Error).message}`,
-      );
+      this.logger.error(`Failed to fetch processes for ${serverId}: ${(err as Error).message}`);
       return [];
     }
   }
@@ -68,10 +59,7 @@ export class ServersController {
   }
 
   @Get(':serverId/metrics')
-  async getMetrics(
-    @Param('serverId') serverId: string,
-    @Query() query: ListMetricsQuery,
-  ) {
+  async getMetrics(@Param('serverId') serverId: string, @Query() query: ListMetricsQuery) {
     if (!this.metricRepo) return [];
     try {
       const where: any = { serverId };
@@ -84,8 +72,7 @@ export class ServersController {
       let displayLimit: number;
       if (rangeMs) {
         const server = await this.servers.getById(serverId);
-        const intervalMs =
-          (server as any)?.intervalMs ?? (server as any)?.agentIntervalMs;
+        const intervalMs = (server as any)?.intervalMs ?? (server as any)?.agentIntervalMs;
         if (intervalMs && intervalMs > 0) {
           const expectedCount = Math.floor(rangeMs / intervalMs);
           displayLimit = Math.min(Math.max(expectedCount, 1), 96);
@@ -111,10 +98,7 @@ export class ServersController {
           ? snapshots
           : Array.from(
               { length: displayLimit },
-              (_, i) =>
-                snapshots[
-                  Math.floor((i * (snapshots.length - 1)) / (displayLimit - 1))
-                ],
+              (_, i) => snapshots[Math.floor((i * (snapshots.length - 1)) / (displayLimit - 1))],
             );
       return sampled.map((s) => ({
         timestamp: s.timestamp.getTime(),
@@ -125,9 +109,7 @@ export class ServersController {
         networkOut: s.networkOut,
       }));
     } catch (err) {
-      this.logger.error(
-        `Failed to fetch metrics for ${serverId}: ${(err as Error).message}`,
-      );
+      this.logger.error(`Failed to fetch metrics for ${serverId}: ${(err as Error).message}`);
       return [];
     }
   }

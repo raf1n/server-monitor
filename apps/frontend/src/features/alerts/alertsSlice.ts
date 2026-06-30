@@ -37,35 +37,21 @@ const alertsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addMatcher(
-        alertsApi.endpoints.listAlerts.matchPending,
-        (state) => {
-          state.alertsLoading = true;
-          state.alertsError = null;
-        },
-      )
-      .addMatcher(
-        alertsApi.endpoints.listAlerts.matchFulfilled,
-        (state, action) => {
-          state.alerts = action.payload;
-          state.alertsLoading = false;
-        },
-      )
-      .addMatcher(
-        alertsApi.endpoints.listAlerts.matchRejected,
-        (state, action) => {
-          state.alertsLoading = false;
-          state.alertsError =
-            (action.error?.message as string) ?? "Failed to fetch alerts";
-        },
-      );
+      .addMatcher(alertsApi.endpoints.listAlerts.matchPending, (state) => {
+        state.alertsLoading = true;
+        state.alertsError = null;
+      })
+      .addMatcher(alertsApi.endpoints.listAlerts.matchFulfilled, (state, action) => {
+        state.alerts = action.payload;
+        state.alertsLoading = false;
+      })
+      .addMatcher(alertsApi.endpoints.listAlerts.matchRejected, (state, action) => {
+        state.alertsLoading = false;
+        state.alertsError = (action.error?.message as string) ?? "Failed to fetch alerts";
+      });
   },
 });
 
-export const {
-  addAlert,
-  setAlertAcknowledged,
-  setAllAlertsAcknowledged,
-  clearAlertsError,
-} = alertsSlice.actions;
+export const { addAlert, setAlertAcknowledged, setAllAlertsAcknowledged, clearAlertsError } =
+  alertsSlice.actions;
 export default alertsSlice.reducer;

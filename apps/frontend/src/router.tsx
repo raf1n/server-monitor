@@ -50,14 +50,70 @@ export const router = createBrowserRouter([
     element: <DashboardLayout />,
     children: [
       { index: true, element: <Navigate to="/dashboard" replace /> },
-      { path: "dashboard", element: <SuspenseWrapper><DashboardHome /></SuspenseWrapper> },
-      { path: "servers", element: <SuspenseWrapper><ServersPage /></SuspenseWrapper> },
-      { path: "processes", element: <SuspenseWrapper><ProcessesPage /></SuspenseWrapper> },
-      { path: "alerts", element: <SuspenseWrapper><AlertsPage /></SuspenseWrapper> },
-      { path: "settings", element: <SuspenseWrapper><SettingsPage /></SuspenseWrapper> },
-      { path: "profile", element: <SuspenseWrapper><ProfilePage /></SuspenseWrapper> },
-      { path: "api-keys", element: <SuspenseWrapper><ApiKeysPage /></SuspenseWrapper> },
-      { path: "ports", element: <SuspenseWrapper><PortsPage /></SuspenseWrapper> },
+      {
+        path: "dashboard",
+        element: (
+          <SuspenseWrapper>
+            <DashboardHome />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: "servers",
+        element: (
+          <SuspenseWrapper>
+            <ServersPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: "processes",
+        element: (
+          <SuspenseWrapper>
+            <ProcessesPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: "alerts",
+        element: (
+          <SuspenseWrapper>
+            <AlertsPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: "settings",
+        element: (
+          <SuspenseWrapper>
+            <SettingsPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: "profile",
+        element: (
+          <SuspenseWrapper>
+            <ProfilePage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: "api-keys",
+        element: (
+          <SuspenseWrapper>
+            <ApiKeysPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: "ports",
+        element: (
+          <SuspenseWrapper>
+            <PortsPage />
+          </SuspenseWrapper>
+        ),
+      },
       { path: "*", element: <Navigate to="/dashboard" replace /> },
     ],
   },

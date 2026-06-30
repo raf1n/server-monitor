@@ -40,25 +40,18 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.authLoading = false;
     });
-    builder.addMatcher(
-      authApi.endpoints.getMe.matchFulfilled,
-      (state, action) => {
-        state.user = action.payload;
-        state.isAuthenticated = true;
-        state.authLoading = false;
-      },
-    );
-    builder.addMatcher(
-      authApi.endpoints.getMe.matchRejected,
-      (state) => {
-        state.user = null;
-        state.isAuthenticated = false;
-        state.authLoading = false;
-      },
-    );
+    builder.addMatcher(authApi.endpoints.getMe.matchFulfilled, (state, action) => {
+      state.user = action.payload;
+      state.isAuthenticated = true;
+      state.authLoading = false;
+    });
+    builder.addMatcher(authApi.endpoints.getMe.matchRejected, (state) => {
+      state.user = null;
+      state.isAuthenticated = false;
+      state.authLoading = false;
+    });
   },
 });
 
-export const { setCredentials, clearCredentials, setAuthLoading } =
-  authSlice.actions;
+export const { setCredentials, clearCredentials, setAuthLoading } = authSlice.actions;
 export default authSlice.reducer;

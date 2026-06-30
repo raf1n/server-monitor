@@ -14,7 +14,7 @@ export interface ServersState {
 
 const initialState: ServersState = {
   servers: API_HOST ? [] : DEMO_SERVERS,
-  selectedId: API_HOST ? "" : DEMO_SERVERS[0]?.id ?? "",
+  selectedId: API_HOST ? "" : (DEMO_SERVERS[0]?.id ?? ""),
   timeRange: "5m",
 };
 
@@ -30,15 +30,12 @@ const serversSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addMatcher(
-      serversApi.endpoints.getServers.matchFulfilled,
-      (state, action) => {
-        state.servers = action.payload;
-        if (!state.servers.find((s) => s.id === state.selectedId)) {
-          state.selectedId = state.servers[0]?.id ?? state.selectedId;
-        }
-      },
-    );
+    builder.addMatcher(serversApi.endpoints.getServers.matchFulfilled, (state, action) => {
+      state.servers = action.payload;
+      if (!state.servers.find((s) => s.id === state.selectedId)) {
+        state.selectedId = state.servers[0]?.id ?? state.selectedId;
+      }
+    });
   },
 });
 

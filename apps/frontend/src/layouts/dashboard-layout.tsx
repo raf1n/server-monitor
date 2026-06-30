@@ -46,7 +46,7 @@ export default function DashboardLayout() {
     }
 
     dispatch(connectSocket());
-  }, [servers, dispatch, searchParams, selectedId, timeRange, API_HOST]);
+  }, [servers, dispatch, searchParams, selectedId, timeRange]);
 
   useEffect(() => {
     const unsubscribe = store.subscribe(() => {
@@ -60,7 +60,7 @@ export default function DashboardLayout() {
   }, [setSearchParams]);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const prevCriticalIds = useRef(new Set<string>());
+  const prevAlertIds = useRef(new Set<string>());
 
   useEffect(() => {
     const handler = () => {
@@ -71,11 +71,20 @@ export default function DashboardLayout() {
   }, []);
 
   useEffect(() => {
-    const newCritical = alerts.filter(
-      (a) => a.severity === "critical" && !prevCriticalIds.current.has(a.id),
-    );
-    for (const alert of newCritical) {
-      prevCriticalIds.current.add(alert.id);
+    // Find IDs that weren't seen before
+    const unseen = alerts.filter((a) => !prevAlertIds.current.has(a.id));
+
+    // Update the set with all current IDs
+    for (const a of alerts) {
+      prevAlertIds.current.add(a.id);
+    }
+
+    // Bulk loads (API fetch) bring many unseen IDs at once — skip sound
+    // Socket addAlert pushes 1-2 at a time — only sound for those
+    if (unseen.length === 0 || unseen.length > 3) return;
+
+    for (const alert of unseen) {
+      if (alert.severity !== "critical") continue;
       if (settings.soundEnabled) {
         try {
           if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();

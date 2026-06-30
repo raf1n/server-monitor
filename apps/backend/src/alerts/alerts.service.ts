@@ -1,6 +1,6 @@
 import { Injectable, Logger, Optional, OnModuleDestroy } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, LessThan } from 'typeorm';
+import { Repository, FindOptionsWhere } from 'typeorm';
 import { AlertEntity } from '../database/entities/alert.entity';
 import { SettingsService } from '../settings/settings.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -113,12 +113,12 @@ export class AlertsService implements OnModuleDestroy {
     return result.affected || 0;
   }
 
-  async loadThresholds(): Promise<Thresholds> {
+  async loadThresholds(serverId?: string): Promise<Thresholds> {
     if (!this.settingsService) return { ...DEFAULT_THRESHOLDS };
     const t = { ...DEFAULT_THRESHOLDS };
 
     const read = async (key: string): Promise<number | null> => {
-      const raw = await this.settingsService!.get(key);
+      const raw = await this.settingsService!.getWithFallback(key, serverId);
       if (raw) {
         const n = Number(raw);
         if (n > 0 && n <= 100) return n;
@@ -180,7 +180,7 @@ export class AlertsService implements OnModuleDestroy {
     memory: number,
     disk: number,
   ): Promise<void> {
-    const thresholds = await this.loadThresholds();
+    const thresholds = await this.loadThresholds(serverId);
     const cooldownMs = (await this.loadCooldownMinutes()) * 60_000;
     const now = Date.now();
 

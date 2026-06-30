@@ -3,9 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotificationEntity } from '../database/entities/notification.entity';
 import { NotificationsService } from './notifications.service';
 import { NotificationsController } from './notifications.controller';
+import { SettingsModule } from '../settings/settings.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([NotificationEntity])],
+  imports: [TypeOrmModule.forFeature([NotificationEntity]), SettingsModule],
   providers: [NotificationsService],
   controllers: [NotificationsController],
   exports: [NotificationsService],

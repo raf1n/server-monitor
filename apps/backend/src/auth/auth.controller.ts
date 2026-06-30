@@ -53,10 +53,10 @@ export class AuthController {
 
   // Protected by default (global JwtAuthGuard — no @Public() decorator)
   @Get('me')
-  async me(@Req() req: any) {
-    const user = await this.users.findByIdOrUsername(req.user?.userId);
+  async me(@Req() req: Request & { user: { userId: string } }) {
+    const user = await this.users.findByIdOrUsername(req?.user?.userId);
     if (!user) return { id: null };
-    const { password, ...profile } = user;
-    return profile;
+
+    return user;
   }
 }

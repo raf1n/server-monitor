@@ -13,6 +13,11 @@ export interface AppSettings {
   memCriticalThreshold: string;
   memWarnThreshold: string;
   diskCriticalThreshold: string;
+  notificationEmail: string;
+  notificationWebhook: string;
+  notificationDiscord: string;
+  notificationTelegramBotToken: string;
+  notificationTelegramChatId: string;
 }
 
 export interface SettingsState {
@@ -31,6 +36,11 @@ const DEFAULTS: AppSettings = {
   memCriticalThreshold: "90",
   memWarnThreshold: "80",
   diskCriticalThreshold: "90",
+  notificationEmail: "",
+  notificationWebhook: "",
+  notificationDiscord: "",
+  notificationTelegramBotToken: "",
+  notificationTelegramChatId: "",
 };
 
 const BACKEND_KEY_MAP: Record<string, keyof AppSettings> = {
@@ -39,12 +49,14 @@ const BACKEND_KEY_MAP: Record<string, keyof AppSettings> = {
   "threshold.mem.critical": "memCriticalThreshold",
   "threshold.mem.warn": "memWarnThreshold",
   "threshold.disk.critical": "diskCriticalThreshold",
+  "notification.email": "notificationEmail",
+  "notification.webhook": "notificationWebhook",
+  "notification.discord": "notificationDiscord",
+  "notification.telegram.bot_token": "notificationTelegramBotToken",
+  "notification.telegram.chat_id": "notificationTelegramChatId",
 };
 
-function coerceValue(
-  key: keyof AppSettings,
-  value: string,
-): AppSettings[keyof AppSettings] {
+function coerceValue(key: keyof AppSettings, value: string): AppSettings[keyof AppSettings] {
   const defaultVal = DEFAULTS[key];
   if (typeof defaultVal === "boolean") {
     return (value === "true") as AppSettings[keyof AppSettings];
@@ -70,8 +82,10 @@ const settingsSlice = createSlice({
       for (const [backendKey, value] of Object.entries(action.payload)) {
         const frontendKey = BACKEND_KEY_MAP[backendKey] ?? backendKey;
         if (frontendKey in DEFAULTS) {
-          (state.settings as Record<string, unknown>)[frontendKey] =
-            coerceValue(frontendKey as keyof AppSettings, value);
+          (state.settings as Record<string, unknown>)[frontendKey] = coerceValue(
+            frontendKey as keyof AppSettings,
+            value,
+          );
         }
       }
     },
@@ -81,6 +95,5 @@ const settingsSlice = createSlice({
   },
 });
 
-export const { updateSetting, mergeSettings, resetDefaults } =
-  settingsSlice.actions;
+export const { updateSetting, mergeSettings, resetDefaults } = settingsSlice.actions;
 export default settingsSlice.reducer;

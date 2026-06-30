@@ -7,27 +7,20 @@ import {
   LogOut,
   Menu,
   RefreshCw,
-  Search,
   Settings,
   User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppSelector, useAppDispatch } from "@/store";
 import { useGetServersQuery } from "@/features/servers/serversApi";
-import {
-  selectSelectedId,
-  selectTimeRange,
-} from "@/features/servers/serversSelectors";
+import { selectSelectedId, selectTimeRange } from "@/features/servers/serversSelectors";
 import { selectServer, setTimeRange } from "@/features/servers/serversSlice";
 import { selectUser } from "@/features/auth/authSelectors";
 import { useLogoutMutation } from "@/features/auth/authApi";
 import { logoutAction } from "@/store/actions";
 import { selectConnection } from "@/features/socket/socketSelectors";
 import { reconnectSocket } from "@/features/socket/socketActions";
-import {
-  selectAlerts,
-  selectUnacknowledgedCount,
-} from "@/features/alerts/alertsSelectors";
+import { selectAlerts, selectUnacknowledgedCount } from "@/features/alerts/alertsSelectors";
 import {
   useAcknowledgeAlertMutation,
   useAcknowledgeAllAlertsMutation,
@@ -43,7 +36,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -59,10 +51,7 @@ interface TopbarProps {
   onToggleSidebar?: () => void;
 }
 
-const STATUS_META: Record<
-  ServerStatus,
-  { label: string; dot: string; text: string }
-> = {
+const STATUS_META: Record<ServerStatus, { label: string; dot: string; text: string }> = {
   online: { label: "Online", dot: "bg-success", text: "text-success" },
   offline: {
     label: "Offline",
@@ -72,13 +61,12 @@ const STATUS_META: Record<
   degraded: { label: "Degraded", dot: "bg-warning", text: "text-warning" },
 };
 
-const CONNECTION_META: Record<ConnectionState, { label: string; dot: string }> =
-  {
-    connected: { label: "Live", dot: "bg-success" },
-    demo: { label: "Demo", dot: "bg-primary" },
-    connecting: { label: "Connecting", dot: "bg-warning animate-pulse-dot" },
-    disconnected: { label: "Offline", dot: "bg-destructive" },
-  };
+const CONNECTION_META: Record<ConnectionState, { label: string; dot: string }> = {
+  connected: { label: "Live", dot: "bg-success" },
+  demo: { label: "Demo", dot: "bg-primary" },
+  connecting: { label: "Connecting", dot: "bg-warning animate-pulse-dot" },
+  disconnected: { label: "Offline", dot: "bg-destructive" },
+};
 
 function formatRelative(ts: number): string {
   const diff = Date.now() - ts;
@@ -108,15 +96,11 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
   });
 
   const selectedServer = servers.find((s) => s.id === serverId) ?? servers[0];
-  const statusMeta = selectedServer
-    ? STATUS_META[selectedServer.status]
-    : STATUS_META.online;
+  const statusMeta = selectedServer ? STATUS_META[selectedServer.status] : STATUS_META.online;
   const connMeta = CONNECTION_META[connection];
 
   const unacked = alerts.filter((a) => !a.acknowledged);
-  const recent = [...unacked]
-    .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, 5);
+  const recent = [...unacked].sort((a, b) => b.timestamp - a.timestamp).slice(0, 5);
 
   const handleLogout = async () => {
     try {
@@ -141,15 +125,10 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
       </Button>
 
       <div className="flex min-w-0 items-center gap-2">
-        <Select
-          value={serverId}
-          onValueChange={(v) => dispatch(selectServer(v))}
-        >
+        <Select value={serverId} onValueChange={(v) => dispatch(selectServer(v))}>
           <SelectTrigger className="h-9 w-[140px] border-border bg-secondary/50 text-sm sm:w-[180px] md:w-[220px]">
             <div className="flex items-center gap-2 truncate">
-              <span
-                className={cn("h-2 w-2 shrink-0 rounded-full", statusMeta.dot)}
-              />
+              <span className={cn("h-2 w-2 shrink-0 rounded-full", statusMeta.dot)} />
               <SelectValue />
             </div>
           </SelectTrigger>
@@ -161,9 +140,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
                   <div className="flex items-center gap-2">
                     <span className={cn("h-2 w-2 rounded-full", meta.dot)} />
                     <span className="font-medium">{server.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {server.region}
-                    </span>
+                    <span className="text-xs text-muted-foreground">{server.region}</span>
                   </div>
                 </SelectItem>
               );
@@ -172,9 +149,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
         </Select>
         <div className="hidden shrink-0 items-center gap-1.5 rounded-md border border-border bg-secondary/50 px-2.5 py-1.5 sm:flex">
           <span className={cn("h-2 w-2 rounded-full", statusMeta.dot)} />
-          <span className={cn("text-xs font-medium", statusMeta.text)}>
-            {statusMeta.label}
-          </span>
+          <span className={cn("text-xs font-medium", statusMeta.text)}>{statusMeta.label}</span>
         </div>
       </div>
 
@@ -186,15 +161,10 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
       <div className="ml-auto flex shrink-0 items-center gap-1.5 md:ml-2 md:gap-2">
         <div className="hidden shrink-0 items-center gap-1.5 rounded-md border border-border bg-secondary/50 px-2.5 py-1.5 lg:flex">
           <span className={cn("h-2 w-2 rounded-full", connMeta.dot)} />
-          <span className="text-xs font-medium text-muted-foreground">
-            {connMeta.label}
-          </span>
+          <span className="text-xs font-medium text-muted-foreground">{connMeta.label}</span>
         </div>
 
-        <Select
-          value={timeRange}
-          onValueChange={(v) => dispatch(setTimeRange(v as TimeRange))}
-        >
+        <Select value={timeRange} onValueChange={(v) => dispatch(setTimeRange(v as TimeRange))}>
           <SelectTrigger className="h-9 w-[90px] border-border bg-secondary/50 text-xs sm:w-[110px] md:w-[130px] md:text-sm">
             <Clock className="mr-1 h-3.5 w-3.5 shrink-0 text-muted-foreground md:mr-1.5 md:h-4 md:w-4" />
             <SelectValue>{TIME_RANGE_SHORT[timeRange]}</SelectValue>
@@ -301,9 +271,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
             <DropdownMenuLabel>
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">
-                    {user?.username || "User"}
-                  </span>
+                  <span className="text-sm font-medium">{user?.username || "User"}</span>
                   <Badge
                     variant={user?.role === "admin" ? "default" : "secondary"}
                     className="text-[10px] capitalize"
@@ -311,9 +279,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
                     {user?.role || "viewer"}
                   </Badge>
                 </div>
-                <span className="text-xs text-muted-foreground">
-                  {user?.email || ""}
-                </span>
+                <span className="text-xs text-muted-foreground">{user?.email || ""}</span>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -324,10 +290,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
               <Settings className="mr-2 h-4 w-4" /> Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={handleLogout}
-            >
+            <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" /> Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>

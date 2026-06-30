@@ -84,9 +84,7 @@ export function LoginPage({ onLogin, error: externalError }: LoginPageProps) {
             </div>
           </div>
 
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
           <Button type="submit" className="w-full gap-2" disabled={loading}>
             <LogIn className="h-4 w-4" />

@@ -1,4 +1,3 @@
-
 import { useMemo } from "react";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
 import { ArrowDown, ArrowUp } from "lucide-react";
@@ -19,26 +18,27 @@ interface StatCardProps {
   delta?: number;
 }
 
-const STATUS_STYLES: Record<StatStatus, { color: string; ring: string; text: string; bg: string }> = {
-  good: {
-    color: "hsl(var(--success))",
-    ring: "ring-success/20",
-    text: "text-success",
-    bg: "bg-success/10",
-  },
-  warning: {
-    color: "hsl(var(--warning))",
-    ring: "ring-warning/20",
-    text: "text-warning",
-    bg: "bg-warning/10",
-  },
-  critical: {
-    color: "hsl(var(--destructive))",
-    ring: "ring-destructive/20",
-    text: "text-destructive",
-    bg: "bg-destructive/10",
-  },
-};
+const STATUS_STYLES: Record<StatStatus, { color: string; ring: string; text: string; bg: string }> =
+  {
+    good: {
+      color: "hsl(var(--success))",
+      ring: "ring-success/20",
+      text: "text-success",
+      bg: "bg-success/10",
+    },
+    warning: {
+      color: "hsl(var(--warning))",
+      ring: "ring-warning/20",
+      text: "text-warning",
+      bg: "bg-warning/10",
+    },
+    critical: {
+      color: "hsl(var(--destructive))",
+      ring: "ring-destructive/20",
+      text: "text-destructive",
+      bg: "bg-destructive/10",
+    },
+  };
 
 function statusFromValue(value: number, thresholds: [number, number]): StatStatus {
   if (value >= thresholds[1]) return "critical";
@@ -79,7 +79,7 @@ export function StatCard({
     <div
       className={cn(
         "group relative overflow-hidden rounded-lg border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md hover:ring-1",
-        styles.ring
+        styles.ring,
       )}
     >
       <div className="flex items-start justify-between">
@@ -98,7 +98,7 @@ export function StatCard({
           className={cn(
             "flex h-9 w-9 items-center justify-center rounded-md",
             styles.bg,
-            styles.text
+            styles.text,
           )}
         >
           {Icon ? <Icon className="h-[18px] w-[18px]" /> : null}
@@ -110,7 +110,7 @@ export function StatCard({
           <span
             className={cn(
               "flex items-center gap-0.5 font-medium",
-              delta >= 0 ? "text-warning" : "text-success"
+              delta >= 0 ? "text-warning" : "text-success",
             )}
           >
             {delta >= 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}

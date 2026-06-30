@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
@@ -36,9 +31,7 @@ export class ApiKeysService {
     const entity = this.keyRepo.create({ keyHash, keyPrefix, serverId, label });
     const saved = await this.keyRepo.save(entity);
 
-    this.logger.log(
-      `API key created: ${keyPrefix}... (server: ${serverId || 'any'})`,
-    );
+    this.logger.log(`API key created: ${keyPrefix}... (server: ${serverId || 'any'})`);
     return {
       id: saved.id,
       key: rawKey,
@@ -59,9 +52,7 @@ export class ApiKeysService {
     for (const candidate of candidates) {
       if (await bcrypt.compare(key, candidate.keyHash)) {
         // Update lastUsedAt (fire and forget)
-        this.keyRepo
-          .update(candidate.id, { lastUsedAt: new Date() })
-          .catch(() => {});
+        this.keyRepo.update(candidate.id, { lastUsedAt: new Date() }).catch(() => {});
         return { valid: true, serverId: candidate.serverId };
       }
     }
@@ -71,7 +62,7 @@ export class ApiKeysService {
 
   async list(): Promise<Omit<ApiKeyEntity, 'keyHash'>[]> {
     const keys = await this.keyRepo.find({ order: { createdAt: 'DESC' } });
-    return keys.map(({ keyHash, ...rest }) => rest);
+    return keys;
   }
 
   async revoke(id: string): Promise<void> {

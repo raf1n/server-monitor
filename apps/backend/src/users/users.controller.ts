@@ -34,8 +34,8 @@ export class UsersController {
       );
     }
     const user = await this.users.create({ ...body, role: 'viewer' });
-    const { password, ...profile } = user;
-    return profile;
+
+    return user;
   }
 
   @Post('create')
@@ -44,25 +44,22 @@ export class UsersController {
   @HttpCode(HttpStatus.CREATED)
   async createUser(@Req() req: any, @Body() body: RegisterUserDto) {
     const user = await this.users.create({ ...body, role: 'viewer' });
-    const { password, ...profile } = user;
-    this.logger.log(
-      `Admin ${req.user.username} created user: ${user.username}`,
-    );
-    return profile;
+
+    this.logger.log(`Admin ${req.user.username} created user: ${user.username}`);
+    return user;
   }
 
   @Get('me')
   async getProfile(@Req() req: any) {
     const user = await this.users.findByIdOrUsername(req.user?.userId);
     if (!user) return { id: null };
-    const { password, ...profile } = user;
-    return profile;
+    return user;
   }
 
   @Patch('me')
   async updateProfile(@Req() req: any, @Body() body: UpdateProfileDto) {
     const user = await this.users.updateProfile(req.user?.userId, body);
-    const { password, ...profile } = user;
-    return profile;
+
+    return user;
   }
 }

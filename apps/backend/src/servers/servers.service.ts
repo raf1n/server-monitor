@@ -151,11 +151,7 @@ export class ServersService implements OnModuleDestroy {
       const dyn = this.memory.get(s.id);
       merged.set(s.id, {
         ...s,
-        status: dyn
-          ? now - dyn.lastSeen > 30_000
-            ? 'offline'
-            : dyn.status
-          : ('offline' as const),
+        status: dyn ? (now - dyn.lastSeen > 30_000 ? 'offline' : dyn.status) : ('offline' as const),
         agentIntervalMs: dyn?.intervalMs,
         agentVersion: dyn?.agentVersion,
       });
@@ -188,7 +184,10 @@ export class ServersService implements OnModuleDestroy {
           { status: 'offline' },
         );
         return;
-      } catch {}
+      } catch {
+        this.dbOk = false;
+        this.logger.warn('DB unavailable — using in-memory storage');
+      }
     }
 
     const threshold = Date.now() - 30_000;

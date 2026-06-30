@@ -1,12 +1,5 @@
-
 import { useMemo } from "react";
-import {
-  AlertTriangle,
-  Bell,
-  CheckCircle2,
-  Info,
-  ShieldAlert,
-} from "lucide-react";
+import { AlertTriangle, Bell, CheckCircle2, Info, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,7 +11,10 @@ interface AlertListProps {
   loading?: boolean;
 }
 
-const SEVERITY_META: Record<Severity, { icon: React.ComponentType<{ className?: string }>; color: string; badge: string; label: string }> = {
+const SEVERITY_META: Record<
+  Severity,
+  { icon: React.ComponentType<{ className?: string }>; color: string; badge: string; label: string }
+> = {
   critical: {
     icon: ShieldAlert,
     color: "text-destructive bg-destructive/10",
@@ -51,10 +47,7 @@ function formatRelative(ts: number): string {
 }
 
 export function AlertList({ alerts, loading = false }: AlertListProps) {
-  const sorted = useMemo(
-    () => [...alerts].sort((a, b) => b.timestamp - a.timestamp),
-    [alerts]
-  );
+  const sorted = useMemo(() => [...alerts].sort((a, b) => b.timestamp - a.timestamp), [alerts]);
 
   if (loading) {
     return (
@@ -90,7 +83,7 @@ export function AlertList({ alerts, loading = false }: AlertListProps) {
           <p className="text-xs text-muted-foreground/70">No recent alerts to show</p>
         </div>
       ) : (
-        <ScrollArea className="h-[320px]">
+        <ScrollArea className="h-[620px]">
           <div className="divide-y divide-border">
             {sorted.map((alert) => {
               const meta = SEVERITY_META[alert.severity];
@@ -100,7 +93,12 @@ export function AlertList({ alerts, loading = false }: AlertListProps) {
                   key={alert.id}
                   className="flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-accent/40"
                 >
-                  <div className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md", meta.color)}>
+                  <div
+                    className={cn(
+                      "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md",
+                      meta.color,
+                    )}
+                  >
                     <Icon className="h-[18px] w-[18px]" />
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col gap-1">

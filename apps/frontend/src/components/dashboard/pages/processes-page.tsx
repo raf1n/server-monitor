@@ -161,13 +161,8 @@ export function ProcessesPage() {
   };
 
   const SortIcon = ({ column }: { column: SortKey }) => {
-    if (sortKey !== column)
-      return <ArrowUpDown className="h-3 w-3 opacity-40" />;
-    return sortDir === "asc" ? (
-      <ArrowUp className="h-3 w-3" />
-    ) : (
-      <ArrowDown className="h-3 w-3" />
-    );
+    if (sortKey !== column) return <ArrowUpDown className="h-3 w-3 opacity-40" />;
+    return sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />;
   };
 
   const onlineCount = processes.filter((p) => p.status === "online").length;
@@ -197,14 +192,10 @@ export function ProcessesPage() {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
         <Loader2 className="h-10 w-10 animate-spin text-muted-foreground/40" />
-        <h2 className="text-base font-semibold text-foreground">
-          Waiting for an agent to connect
-        </h2>
+        <h2 className="text-base font-semibold text-foreground">Waiting for an agent to connect</h2>
         <p className="text-sm text-muted-foreground">
           Start the backend and run{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
-            pnpm dev:agent
-          </code>{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">pnpm dev:agent</code>{" "}
           to see processes.
         </p>
       </div>
@@ -226,9 +217,7 @@ export function ProcessesPage() {
             <Activity className="h-5 w-5 text-success" />
           </div>
           <div>
-            <p className="text-2xl font-semibold text-foreground">
-              {onlineCount}
-            </p>
+            <p className="text-2xl font-semibold text-foreground">{onlineCount}</p>
             <p className="text-xs text-muted-foreground">Running</p>
           </div>
         </Card>
@@ -237,9 +226,7 @@ export function ProcessesPage() {
             <AlertCircle className="h-5 w-5 text-destructive" />
           </div>
           <div>
-            <p className="text-2xl font-semibold text-foreground">
-              {erroredCount}
-            </p>
+            <p className="text-2xl font-semibold text-foreground">{erroredCount}</p>
             <p className="text-xs text-muted-foreground">Errored</p>
           </div>
         </Card>
@@ -248,9 +235,7 @@ export function ProcessesPage() {
             <Workflow className="h-5 w-5 text-muted-foreground" />
           </div>
           <div>
-            <p className="text-2xl font-semibold text-foreground">
-              {stoppedCount}
-            </p>
+            <p className="text-2xl font-semibold text-foreground">{stoppedCount}</p>
             <p className="text-xs text-muted-foreground">Stopped</p>
           </div>
         </Card>
@@ -259,9 +244,7 @@ export function ProcessesPage() {
             <Cpu className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <p className="text-2xl font-semibold text-foreground">
-              {stats?.activeProcesses ?? 0}
-            </p>
+            <p className="text-2xl font-semibold text-foreground">{stats?.activeProcesses ?? 0}</p>
             <p className="text-xs text-muted-foreground">Active</p>
           </div>
         </Card>
@@ -286,8 +269,7 @@ export function ProcessesPage() {
                 ? "PM2"
                 : viewFilter === "cpu"
                   ? "CPU"
-                  : viewFilter.charAt(0).toUpperCase() +
-                    viewFilter.slice(1)}{" "}
+                  : viewFilter.charAt(0).toUpperCase() + viewFilter.slice(1)}{" "}
               Processes
             </h3>
             <Badge variant="secondary" className="text-[10px]">
@@ -350,16 +332,12 @@ export function ProcessesPage() {
         {apiLoading && filtered.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-12 text-center">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground">
-              Loading processes...
-            </p>
+            <p className="text-sm text-muted-foreground">Loading processes...</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
             <Workflow className="h-8 w-8 text-muted-foreground/50" />
-            <p className="text-sm font-medium text-muted-foreground">
-              No processes found
-            </p>
+            <p className="text-sm font-medium text-muted-foreground">No processes found</p>
             <p className="text-xs text-muted-foreground/70">
               The agent hasn't reported any processes yet
             </p>
@@ -395,8 +373,7 @@ export function ProcessesPage() {
                       onClick={() => toggleSort("cpu")}
                       className="flex w-full items-center justify-end gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground"
                     >
-                      {viewFilter === "memory" ? "Memory %" : "CPU"}{" "}
-                      <SortIcon column="cpu" />
+                      {viewFilter === "memory" ? "Memory %" : "CPU"} <SortIcon column="cpu" />
                     </button>
                   </TableHead>
                   <TableHead className="text-right">
@@ -427,11 +404,8 @@ export function ProcessesPage() {
               </TableHeader>
               <TableBody>
                 {filtered.map((proc) => {
-                  const badge =
-                    STATUS_BADGE[proc.status] ?? STATUS_BADGE.online;
-                  const sourceBadge =
-                    SOURCE_BADGE[proc.source || "system"] ??
-                    SOURCE_BADGE.system;
+                  const badge = STATUS_BADGE[proc.status] ?? STATUS_BADGE.online;
+                  const sourceBadge = SOURCE_BADGE[proc.source || "system"] ?? SOURCE_BADGE.system;
                   return (
                     <TableRow
                       key={proc.id}
@@ -446,10 +420,7 @@ export function ProcessesPage() {
                         {proc.name}
                         {proc.pid ? (
                           <span
-                            className={cn(
-                              "text-muted-foreground",
-                              compactMode ? "ml-1" : "ml-2",
-                            )}
+                            className={cn("text-muted-foreground", compactMode ? "ml-1" : "ml-2")}
                           >
                             ({proc.pid})
                           </span>
@@ -458,10 +429,7 @@ export function ProcessesPage() {
                       <TableCell>
                         <Badge
                           variant="outline"
-                          className={cn(
-                            "gap-1 text-[10px]",
-                            sourceBadge.className,
-                          )}
+                          className={cn("gap-1 text-[10px]", sourceBadge.className)}
                         >
                           {sourceBadge.label}
                         </Badge>
@@ -488,15 +456,10 @@ export function ProcessesPage() {
                         className={cn(
                           "text-right font-mono tabular-nums",
                           compactMode ? "text-xs" : "text-sm",
-                          cpuColor(
-                            viewFilter === "memory" ? proc.memory : proc.cpu,
-                          ),
+                          cpuColor(viewFilter === "memory" ? proc.memory : proc.cpu),
                         )}
                       >
-                        {viewFilter === "memory"
-                          ? proc.memory.toFixed(1)
-                          : proc.cpu.toFixed(1)}
-                        %
+                        {viewFilter === "memory" ? proc.memory.toFixed(1) : proc.cpu.toFixed(1)}%
                       </TableCell>
                       <TableCell
                         className={cn(

@@ -1,24 +1,28 @@
 import { useMemo, useState } from "react";
-import {
-  AlertTriangle,
-  Bell,
-  CheckCheck,
-  CheckCircle2,
-  Info,
-  ShieldAlert,
-} from "lucide-react";
+import { AlertTriangle, Bell, CheckCheck, CheckCircle2, Info, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppSelector } from "@/store";
 import { selectStats, selectStatsLoading } from "@/features/stats/statsSelectors";
-import { selectAlerts, selectAlertsLoading, selectAlertsError } from "@/features/alerts/alertsSelectors";
-import { useListAlertsQuery, useAcknowledgeAlertMutation, useAcknowledgeAllAlertsMutation } from "@/features/alerts/alertsApi";
+import {
+  selectAlerts,
+  selectAlertsLoading,
+  selectAlertsError,
+} from "@/features/alerts/alertsSelectors";
+import {
+  useListAlertsQuery,
+  useAcknowledgeAlertMutation,
+  useAcknowledgeAllAlertsMutation,
+} from "@/features/alerts/alertsApi";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Severity } from "@/lib/types";
 
-const SEVERITY_META: Record<Severity, { icon: React.ComponentType<{ className?: string }>; color: string; badge: string; label: string }> = {
+const SEVERITY_META: Record<
+  Severity,
+  { icon: React.ComponentType<{ className?: string }>; color: string; badge: string; label: string }
+> = {
   critical: {
     icon: ShieldAlert,
     color: "text-destructive bg-destructive/10",
@@ -75,21 +79,28 @@ export function AlertsPage() {
   const hasApi = import.meta.env.VITE_API_URL !== undefined;
   useListAlertsQuery({}, { skip: !hasApi });
   const sourceAlerts = useMemo(
-    () => hasApi ? apiAlerts : (stats?.alerts ?? []),
+    () => (hasApi ? apiAlerts : (stats?.alerts ?? [])),
     [hasApi, apiAlerts, stats],
   );
   const isLiveLoading = loading || apiLoading;
 
   const filtered = useMemo(() => {
-    let list = severityFilter === "all" ? sourceAlerts : sourceAlerts.filter((a) => a.severity === severityFilter);
+    let list =
+      severityFilter === "all"
+        ? sourceAlerts
+        : sourceAlerts.filter((a) => a.severity === severityFilter);
     if (!showAcknowledged) {
       list = list.filter((a) => !a.acknowledged);
     }
     return [...list].sort((a, b) => b.timestamp - a.timestamp);
   }, [sourceAlerts, severityFilter, showAcknowledged]);
 
-  const criticalCount = sourceAlerts.filter((a) => a.severity === "critical" && !a.acknowledged).length;
-  const warningCount = sourceAlerts.filter((a) => a.severity === "warning" && !a.acknowledged).length;
+  const criticalCount = sourceAlerts.filter(
+    (a) => a.severity === "critical" && !a.acknowledged,
+  ).length;
+  const warningCount = sourceAlerts.filter(
+    (a) => a.severity === "warning" && !a.acknowledged,
+  ).length;
   const unacknowledgedCount = sourceAlerts.filter((a) => !a.acknowledged).length;
 
   const severityFilters: Array<{ value: Severity | "all"; label: string; color: string }> = [
@@ -121,8 +132,9 @@ export function AlertsPage() {
       <div className="flex flex-col gap-1">
         <h1 className="text-xl font-semibold text-foreground">Alerts</h1>
         <p className="text-sm text-muted-foreground">
-          {error ? `Error: ${error}` :
-            unacknowledgedCount > 0
+          {error
+            ? `Error: ${error}`
+            : unacknowledgedCount > 0
               ? `${unacknowledgedCount} unacknowledged alert${unacknowledgedCount !== 1 ? "s" : ""} requiring attention`
               : "All alerts have been acknowledged"}
         </p>
@@ -178,7 +190,7 @@ export function AlertsPage() {
                     "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
                     severityFilter === s.value
                       ? "bg-accent text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   <span className={cn(severityFilter === s.value ? "" : s.color)}>{s.label}</span>
@@ -192,7 +204,7 @@ export function AlertsPage() {
               onClick={() => setShowAcknowledged(!showAcknowledged)}
               className={cn(
                 "h-8 gap-1.5 text-xs font-medium",
-                showAcknowledged ? "text-foreground" : "text-muted-foreground"
+                showAcknowledged ? "text-foreground" : "text-muted-foreground",
               )}
             >
               <CheckCheck className="h-3.5 w-3.5" />
@@ -200,15 +212,15 @@ export function AlertsPage() {
             </Button>
 
             {hasApi && unacknowledgedCount > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => acknowledgeAll(undefined)}
-                    className="h-8 gap-1.5 text-xs font-medium"
-                  >
-                    <CheckCheck className="h-3.5 w-3.5" />
-                    Ack all
-                  </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => acknowledgeAll(undefined)}
+                className="h-8 gap-1.5 text-xs font-medium"
+              >
+                <CheckCheck className="h-3.5 w-3.5" />
+                Ack all
+              </Button>
             )}
           </div>
         </div>
@@ -231,10 +243,15 @@ export function AlertsPage() {
                   key={alert.id}
                   className={cn(
                     "flex items-start gap-3 px-5 py-4 transition-colors hover:bg-accent/40",
-                    alert.acknowledged && "opacity-60"
+                    alert.acknowledged && "opacity-60",
                   )}
                 >
-                  <div className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md", meta.color)}>
+                  <div
+                    className={cn(
+                      "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md",
+                      meta.color,
+                    )}
+                  >
                     <Icon className="h-[18px] w-[18px]" />
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -257,13 +274,19 @@ export function AlertsPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {alert.acknowledged ? (
-                      <Badge variant="outline" className="shrink-0 gap-1 border-success/30 bg-success/10 text-[10px] text-success">
+                      <Badge
+                        variant="outline"
+                        className="shrink-0 gap-1 border-success/30 bg-success/10 text-[10px] text-success"
+                      >
                         <CheckCircle2 className="h-3 w-3" />
                         Acknowledged
                       </Badge>
                     ) : (
                       <>
-                        <Badge variant="outline" className="shrink-0 border-warning/30 bg-warning/10 text-[10px] text-warning">
+                        <Badge
+                          variant="outline"
+                          className="shrink-0 border-warning/30 bg-warning/10 text-[10px] text-warning"
+                        >
                           Pending
                         </Badge>
                         {hasApi && (

@@ -3,7 +3,7 @@ import { Activity, Cpu, HardDrive, MemoryStick } from "lucide-react";
 import { useAppSelector } from "@/store";
 import { useGetServersQuery } from "@/features/servers/serversApi";
 import { useGetStatsHistoryQuery, useGetLatestStatsQuery } from "@/features/stats/statsApi";
-import { useGetThresholdsQuery } from "@/features/alerts/alertsApi";
+import { useListAlertsQuery, useGetThresholdsQuery } from "@/features/alerts/alertsApi";
 import {
   selectSelectedId,
   selectTimeRange,
@@ -45,6 +45,8 @@ export function DashboardHome() {
     { skip: !isLive || !serverId },
   );
   useGetLatestStatsQuery({ serverId: serverId! }, { skip: !isLive || !serverId });
+
+  useListAlertsQuery({ limit: "10" }, { skip: !isLive });
 
   const { data: thresholds } = useGetThresholdsQuery(undefined, {
     skip: !isLive,

@@ -1,13 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  Bell,
-  Eye,
-  Gauge,
-  RefreshCw,
-  Save,
-  Server,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Bell, Eye, Gauge, Globe, RefreshCw, Save, Server } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store";
 import { selectSelectedId, selectServers } from "@/features/servers/serversSelectors";
 import { selectSettings } from "@/features/settings/settingsSelectors";
@@ -17,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import type { AppSettings } from "@/features/settings/settingsSlice";
@@ -28,12 +21,7 @@ interface SettingsSectionProps {
   children: React.ReactNode;
 }
 
-function SettingsSection({
-  title,
-  description,
-  icon: Icon,
-  children,
-}: SettingsSectionProps) {
+function SettingsSection({ title, description, icon: Icon, children }: SettingsSectionProps) {
   return (
     <Card className="border-border">
       <div className="flex items-center gap-3 border-b border-border px-5 py-4">
@@ -71,28 +59,26 @@ function SettingRow({ label, description, control }: SettingRowProps) {
 export function SettingsPage() {
   const dispatch = useAppDispatch();
   const settings = useAppSelector(selectSettings);
-  const serverId = useAppSelector(selectSelectedId);
+  const selectedServerId = useAppSelector(selectSelectedId);
   const servers = useAppSelector(selectServers);
   const [saveSettings] = useSaveSettingsMutation();
   const [saved, setSaved] = useState(false);
-  const seeded = useRef(false);
+  const [scopeServerId, setScopeServerId] = useState<string | undefined>(undefined);
+  const seeded = useRef<string | undefined>(undefined);
 
-  const { data: backendSettings } = useGetSettingsQuery(undefined, {
+  const { data: backendSettings } = useGetSettingsQuery(scopeServerId, {
     skip: !import.meta.env.VITE_API_URL,
   });
 
   useEffect(() => {
-    if (!backendSettings || seeded.current) return;
-    seeded.current = true;
+    if (!backendSettings || seeded.current === scopeServerId) return;
+    seeded.current = scopeServerId;
     dispatch(mergeSettings(backendSettings));
-  }, [backendSettings, dispatch]);
+  }, [backendSettings, dispatch, scopeServerId]);
 
-  const currentAgentVersion = servers.find((s) => s.id === serverId)?.agentVersion;
+  const currentAgentVersion = servers.find((s) => s.id === selectedServerId)?.agentVersion;
 
-  const handleUpdateSetting = <K extends keyof AppSettings>(
-    key: K,
-    value: AppSettings[K],
-  ) => {
+  const handleUpdateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     dispatch(updateSetting({ key, value }));
   };
 
@@ -111,7 +97,7 @@ export function SettingsPage() {
       for (const [k, v] of Object.entries(settings)) {
         entries[KEY_MAP[k] ?? k] = String(v);
       }
-      await saveSettings({ settings: entries }).unwrap();
+      await saveSettings({ settings: entries, serverId: scopeServerId }).unwrap();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
@@ -129,6 +115,28 @@ export function SettingsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mr-2">
+            <Globe className="h-4 w-4 text-muted-foreground" />
+            <Select
+              value={scopeServerId ?? "__global__"}
+              onValueChange={(val) => {
+                setScopeServerId(val === "__global__" ? undefined : val);
+                seeded.current = undefined;
+              }}
+            >
+              <SelectTrigger className="h-8 w-40 border-border bg-secondary/50 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__global__">Global</SelectItem>
+                {servers.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name || s.id}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <Button
             variant="outline"
             size="sm"
@@ -147,11 +155,7 @@ export function SettingsPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="space-y-6">
-          <SettingsSection
-            title="Display"
-            description="Visual preferences"
-            icon={Eye}
-          >
+          <SettingsSection title="Display" description="Visual preferences" icon={Eye}>
             <SettingRow
               label="Show sensitive data"
               description="Display IP addresses and host details"
@@ -269,11 +273,7 @@ export function SettingsPage() {
         </div>
 
         <div className="space-y-6">
-          <SettingsSection
-            title="Monitoring"
-            description="Connection preferences"
-            icon={Gauge}
-          >
+          <SettingsSection title="Monitoring" description="Connection preferences" icon={Gauge}>
             <SettingRow
               label="Auto-reconnect"
               description="Automatically reconnect on connection loss"
@@ -312,13 +312,74 @@ export function SettingsPage() {
                 />
               }
             />
+            <Separator />
+            <SettingRow
+              label="Email"
+              description="Notification email address"
+              control={
+                <Input
+                  value={settings.notificationEmail}
+                  onChange={(e) => handleUpdateSetting("notificationEmail", e.target.value)}
+                  placeholder="e.g. alerts@example.com"
+                  className="h-8 w-52 border-border bg-secondary/50 text-xs"
+                />
+              }
+            />
+            <Separator />
+            <SettingRow
+              label="Webhook URL"
+              description="Generic webhook endpoint"
+              control={
+                <Input
+                  value={settings.notificationWebhook}
+                  onChange={(e) => handleUpdateSetting("notificationWebhook", e.target.value)}
+                  placeholder="https://hooks.example.com/..."
+                  className="h-8 w-52 border-border bg-secondary/50 text-xs"
+                />
+              }
+            />
+            <Separator />
+            <SettingRow
+              label="Discord Webhook"
+              description="Discord channel webhook URL"
+              control={
+                <Input
+                  value={settings.notificationDiscord}
+                  onChange={(e) => handleUpdateSetting("notificationDiscord", e.target.value)}
+                  placeholder="https://discord.com/api/webhooks/..."
+                  className="h-8 w-52 border-border bg-secondary/50 text-xs"
+                />
+              }
+            />
+            <Separator />
+            <SettingRow
+              label="Telegram Bot Token"
+              description="Bot token from @BotFather"
+              control={
+                <Input
+                  value={settings.notificationTelegramBotToken}
+                  onChange={(e) => handleUpdateSetting("notificationTelegramBotToken", e.target.value)}
+                  placeholder="123456:ABC-DEF1234..."
+                  className="h-8 w-52 border-border bg-secondary/50 text-xs"
+                />
+              }
+            />
+            <Separator />
+            <SettingRow
+              label="Telegram Chat ID"
+              description="Chat or channel ID for notifications"
+              control={
+                <Input
+                  value={settings.notificationTelegramChatId}
+                  onChange={(e) => handleUpdateSetting("notificationTelegramChatId", e.target.value)}
+                  placeholder="e.g. -1001234567890"
+                  className="h-8 w-52 border-border bg-secondary/50 text-xs"
+                />
+              }
+            />
           </SettingsSection>
 
-          <SettingsSection
-            title="About"
-            description="System information and version"
-            icon={Server}
-          >
+          <SettingsSection title="About" description="System information and version" icon={Server}>
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Version</span>
@@ -327,16 +388,12 @@ export function SettingsPage() {
               <Separator />
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Build</span>
-                <span className="font-mono text-xs text-muted-foreground">
-                  {__BUILD__}
-                </span>
+                <span className="font-mono text-xs text-muted-foreground">{__BUILD__}</span>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Node</span>
-                <span className="font-mono text-xs text-foreground">
-                  {__BUILD_NODE__}
-                </span>
+                <span className="font-mono text-xs text-foreground">{__BUILD_NODE__}</span>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
@@ -348,10 +405,7 @@ export function SettingsPage() {
               <Separator />
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">License</span>
-                <Badge
-                  variant="outline"
-                  className="text-[10px] text-muted-foreground"
-                >
+                <Badge variant="outline" className="text-[10px] text-muted-foreground">
                   MIT
                 </Badge>
               </div>

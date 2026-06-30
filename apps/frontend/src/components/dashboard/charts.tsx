@@ -1,4 +1,3 @@
-
 import { useMemo } from "react";
 import {
   Area,
@@ -21,10 +20,21 @@ const AXIS_COLOR = "hsl(var(--muted-foreground))";
 function formatAxisTime(ts: number, timeRange: TimeRange): string {
   const d = new Date(ts);
   if (timeRange === "24h") {
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
   }
   if (timeRange === "5m") {
-    return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+    return d.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
   }
   return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
 }
@@ -51,7 +61,9 @@ function ChartTooltip({ active, payload, label, unit = "" }: ChartTooltipProps) 
   if (!active || !payload || payload.length === 0) return null;
   return (
     <div className="rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-lg">
-      {label && <p className="mb-1 font-medium text-foreground">{formatTooltipTime(Number(label))}</p>}
+      {label && (
+        <p className="mb-1 font-medium text-foreground">{formatTooltipTime(Number(label))}</p>
+      )}
       {payload.map((entry, i) => (
         <p key={i} className="flex items-center gap-1.5 text-muted-foreground">
           <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
@@ -82,10 +94,18 @@ const CHART_LABELS: Partial<Record<string, string>> = {
   disk: "Disk",
 };
 
-export function TimeSeriesChart({ data, dataKey, color, unit = "%", height = 220, timeRange, animate = false }: TimeSeriesChartProps) {
+export function TimeSeriesChart({
+  data,
+  dataKey,
+  color,
+  unit = "%",
+  height = 220,
+  timeRange,
+  animate = false,
+}: TimeSeriesChartProps) {
   const gradientId = useMemo(
     () => `grad-${dataKey}-${color.replace(/[^a-z0-9]/gi, "")}`,
-    [dataKey, color]
+    [dataKey, color],
   );
 
   return (
@@ -138,7 +158,12 @@ interface NetworkChartProps {
   animate?: boolean;
 }
 
-export function NetworkChart({ data, height = 220, timeRange, animate = false }: NetworkChartProps) {
+export function NetworkChart({
+  data,
+  height = 220,
+  timeRange,
+  animate = false,
+}: NetworkChartProps) {
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
@@ -212,7 +237,10 @@ export function DiskBarChart({ data, height = 220, animate = false }: DiskBarCha
           domain={[0, 100]}
           width={40}
         />
-        <Tooltip content={<ChartTooltip unit="%" />} cursor={{ fill: "hsl(var(--accent) / 0.4)" }} />
+        <Tooltip
+          content={<ChartTooltip unit="%" />}
+          cursor={{ fill: "hsl(var(--accent) / 0.4)" }}
+        />
         <Bar
           dataKey="used"
           name="Used"
