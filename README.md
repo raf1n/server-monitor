@@ -205,6 +205,7 @@ server-monitor/
 | `REDIS_PASSWORD`         | Yes      | Password for Redis authentication                             |
 | `DB_PASSWORD`            | Yes      | Password for PostgreSQL                                       |
 | `CORS_ORIGIN`            | No       | Frontend origin for CORS (e.g. `https://monitor.example.com`) |
+| `PUBLIC_BASE_URL`        | No       | Backend base URL used by `install.sh`                         |
 | `ALLOW_REGISTRATION`     | No       | `true` to allow open user registration (default: `false`)     |
 | `METRICS_RETENTION_DAYS` | No       | Auto-drop snapshots older than N days (default: `7`)          |
 

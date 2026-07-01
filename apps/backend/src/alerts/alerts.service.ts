@@ -1,6 +1,6 @@
 import { Injectable, Logger, Optional, OnModuleDestroy } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere } from 'typeorm';
+import { Repository, FindOptionsWhere, LessThan } from 'typeorm';
 import { AlertEntity } from '../database/entities/alert.entity';
 import { SettingsService } from '../settings/settings.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -109,7 +109,7 @@ export class AlertsService implements OnModuleDestroy {
   }
 
   async deleteOld(before: Date): Promise<number> {
-    const result = await this.alertRepo.delete({ timestamp: before });
+    const result = await this.alertRepo.delete({ timestamp: LessThan(before) });
     return result.affected || 0;
   }
 

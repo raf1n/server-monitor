@@ -20,6 +20,8 @@ export class ServersService implements OnModuleDestroy {
   private memory = new Map<string, DynamicServer>();
   private staleInterval: ReturnType<typeof setInterval>;
   private dbOk = true;
+  private readonly demoServersEnabled =
+    process.env.ENABLE_DEMO_SERVERS === 'true' || process.env.NODE_ENV !== 'production';
 
   private staticServers = [
     {
@@ -58,10 +60,12 @@ export class ServersService implements OnModuleDestroy {
     @InjectRepository(ServerEntity)
     private readonly serverRepo: Repository<ServerEntity>,
   ) {
-    for (const s of this.staticServers) {
-      this.memory.set(s.id, { ...s, status: 'offline', lastSeen: 0 });
+    if (this.demoServersEnabled) {
+      for (const s of this.staticServers) {
+        this.memory.set(s.id, { ...s, status: 'offline', lastSeen: 0 });
+      }
     }
-    this.staleInterval = setInterval(() => this.markStale(), 15_000);
+    this.staleInterval = setInterval(() => void this.markStale(), 15_000);
   }
 
   onModuleDestroy() {
@@ -134,6 +138,21 @@ export class ServersService implements OnModuleDestroy {
       }
     }
 
+    if (!this.demoServersEnabled) {
+      return Array.from(this.memory.values()).map((s) => ({
+        id: s.id,
+        name: s.name,
+        host: s.host,
+        region: s.region,
+        status: (Date.now() - s.lastSeen > 30_000 ? 'offline' : s.status) as
+          | 'online'
+          | 'offline'
+          | 'degraded',
+        agentIntervalMs: s.intervalMs,
+        agentVersion: s.agentVersion,
+      }));
+    }
+
     const now = Date.now();
     const merged = new Map<
       string,
@@ -146,15 +165,19 @@ export class ServersService implements OnModuleDestroy {
         agentIntervalMs?: number;
         agentVersion?: string;
       }
-    >();
-    for (const s of this.staticServers) {
-      const dyn = this.memory.get(s.id);
-      merged.set(s.id, {
-        ...s,
-        status: dyn ? (now - dyn.lastSeen > 30_000 ? 'offline' : dyn.status) : ('offline' as const),
-        agentIntervalMs: dyn?.intervalMs,
-        agentVersion: dyn?.agentVersion,
-      });
+      >();
+    if (this.demoServersEnabled) {
+      for (const s of this.staticServers) {
+        const dyn = this.memory.get(s.id);
+        merged.set(s.id, {
+          ...s,
+          status: dyn
+            ? (now - dyn.lastSeen > 30_000 ? 'offline' : dyn.status)
+            : ('offline' as const),
+          agentIntervalMs: dyn?.intervalMs,
+          agentVersion: dyn?.agentVersion,
+        });
+      }
     }
     for (const s of this.memory.values()) {
       if (!merged.has(s.id)) {
@@ -175,11 +198,11 @@ export class ServersService implements OnModuleDestroy {
     return Array.from(merged.values());
   }
 
-  private markStale() {
+  private async markStale() {
     if (this.dbOk) {
       try {
         const threshold = new Date(Date.now() - 30_000);
-        this.serverRepo.update(
+        await this.serverRepo.update(
           { lastSeen: LessThan(threshold), status: 'online' },
           { status: 'offline' },
         );

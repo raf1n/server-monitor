@@ -78,6 +78,45 @@ export class SettingsService implements OnModuleDestroy {
       this.logger.error(
         `Failed to save setting ${key}: ${(err as Error).message}`,
       );
+      throw err;
+    }
+  }
+
+  async setMany(
+    settings: Record<string, string>,
+    serverId?: string,
+  ): Promise<void> {
+    const entries = Object.entries(settings);
+    const cacheKeys = entries.map(([key]) => this.cacheKey(key, serverId));
+
+    try {
+      await this.settingsRepo.manager.transaction(async (manager) => {
+        const repo = manager.getRepository(SettingsEntity);
+
+        for (const [key, value] of entries) {
+          const existing = await repo.findOne({
+            where: this.where(key, serverId),
+          });
+
+          if (existing) {
+            await repo.update(existing.id, { value });
+          } else {
+            await repo.save({ key, value, serverId });
+          }
+        }
+      });
+
+      for (let i = 0; i < entries.length; i++) {
+        this.cache.set(cacheKeys[i], {
+          value: entries[i][1],
+          ttl: Date.now() + this.CACHE_TTL_MS,
+        });
+      }
+    } catch (err) {
+      this.logger.error(
+        `Failed to save settings batch: ${(err as Error).message}`,
+      );
+      throw err;
     }
   }
 
@@ -107,6 +146,7 @@ export class SettingsService implements OnModuleDestroy {
       this.logger.error(
         `Failed to delete setting ${key}: ${(err as Error).message}`,
       );
+      throw err;
     }
   }
 

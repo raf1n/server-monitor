@@ -6,6 +6,7 @@ import {
   Query,
   Logger,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { UpdateSettingDto, UpdateSettingsBulkDto } from '../dtos/settings.dto';
@@ -37,9 +38,21 @@ export class SettingsController {
   @Roles('admin')
   @UseGuards(RolesGuard)
   async updateBulk(@Body() body: UpdateSettingsBulkDto) {
-    for (const [key, value] of Object.entries(body.settings)) {
-      await this.settings.set(key, value, body.serverId);
+    if (
+      typeof body.settings !== 'object' ||
+      body.settings === null ||
+      Array.isArray(body.settings)
+    ) {
+      throw new BadRequestException('settings must be a plain object');
     }
+
+    for (const [key, value] of Object.entries(body.settings)) {
+      if (typeof value !== 'string') {
+        throw new BadRequestException(`settings.${key} must be a string`);
+      }
+    }
+
+    await this.settings.setMany(body.settings as Record<string, string>, body.serverId);
     return { success: true };
   }
 }

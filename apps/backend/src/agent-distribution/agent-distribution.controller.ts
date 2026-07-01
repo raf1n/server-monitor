@@ -1,5 +1,5 @@
-import { Controller, Get, Req, Res, Header, Logger } from '@nestjs/common';
-import { Response, Request } from 'express';
+import { Controller, Get, Res, Header, Logger } from '@nestjs/common';
+import { Response } from 'express';
 import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { Public } from '../auth/public.decorator';
@@ -29,13 +29,12 @@ export class AgentDistributionController {
 
   @Get('install.sh')
   @Header('Content-Type', 'text/x-shellscript; charset=utf-8')
-  async getInstallSh(@Req() req: Request, @Res() res: Response) {
+  async getInstallSh(@Res() res: Response) {
     try {
       let file = await readFile(join(this.agentDistDir, 'install.sh'), 'utf-8');
-      const protocol = req.protocol;
-      const host = req.hostname;
-      const port = req.headers.host?.includes(':') ? `:${req.headers.host.split(':')[1]}` : '';
-      const baseUrl = `${protocol}://${host}${port}`;
+      const baseUrl =
+        process.env.PUBLIC_BASE_URL ||
+        'http://localhost:3300';
       file = file.replace(/__BACKEND_URL__/g, baseUrl);
       res.send(file);
     } catch {
