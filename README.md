@@ -80,11 +80,16 @@ After logging in, go to **API Keys** and create a key. Then on each server you w
 curl -sSL https://your-domain/install.sh | bash
 ```
 
-Or non-interactive:
+Or fully non-interactive (fails if any required value is missing):
 
 ```bash
-API_KEY=your-key-here bash <(curl -sSL https://your-domain/install.sh)
+bash <(curl -sSL https://your-domain/install.sh) \
+  --non-interactive \
+  --server-id srv-web-01 \
+  --api-key your-key-here
 ```
+
+All options (`--server-id`, `--api-url`, `--api-key`, `--interval`, `--non-interactive`) can also be set via env vars to skip prompts.
 
 This installs a systemd service that starts on boot and restarts on crash.
 
@@ -115,7 +120,7 @@ server-monitor/
 │   │   └── src/
 │   │       ├── index.ts           # Entry point, CLI args
 │   │       ├── collector.ts       # Metric + port collection
-│   │       ├── sender.ts          # HTTP POST to backend
+│   │       ├── sender.ts          # HTTP POST to backend (retry + buffer)
 │   │       ├── system-collector.ts# OS process collection
 │   │       └── pm2-collector.ts   # PM2 process collection
 │   │
@@ -181,12 +186,14 @@ server-monitor/
 
 ### Agent (`apps/agent/.env`)
 
-| Variable      | Default                 | Description                                            |
-| ------------- | ----------------------- | ------------------------------------------------------ |
-| `SERVER_ID`   | `srv-prod-01`           | Unique server identifier                               |
-| `API_URL`     | `http://localhost:3300` | Backend ingest endpoint                                |
-| `API_KEY`     | —                       | API key (per-server key from dashboard, or master key) |
-| `INTERVAL_MS` | `60000`                 | Collection interval in ms (default 60s)                |
+| Variable        | Default                 | Description                                            |
+| --------------- | ----------------------- | ------------------------------------------------------ |
+| `SERVER_ID`     | `srv-prod-01`           | Unique server identifier                               |
+| `API_URL`       | `http://localhost:3300` | Backend ingest endpoint                                |
+| `API_KEY`       | —                       | API key (per-server key from dashboard, or master key) |
+| `INTERVAL_MS`   | `60000`                 | Collection interval in ms (default 60s)                |
+| `MAX_RETRIES`   | `3`                     | Send retry attempts before buffering                   |
+| `RETRY_BACKOFF` | `1000`                  | Base retry backoff in ms (exponential, +random jitter) |
 
 ### Root `.env` (production)
 
