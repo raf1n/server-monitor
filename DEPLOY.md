@@ -21,7 +21,40 @@ Backend (Docker, port 3300)
   └── Redis — internal
 ```
 
-## Step 1: Clone and configure
+## Quick deploy (recommended)
+
+The `deploy.sh` script handles everything — dependencies, `.env` generation, frontend build, and backend containers:
+
+```bash
+# Interactive — prompts for domain and admin password
+sudo bash deploy.sh
+
+# Or fully non-interactive (pre-set env vars)
+DOMAIN=monitor.example.com ADMIN_PASSWORD=my-secret sudo -E bash deploy.sh
+```
+
+Script sets up:
+- Docker, Node.js, pnpm if missing
+- Generates secrets (JWT, DB, Redis, agent API key) and writes `.env`
+- Installs dependencies, builds frontend (same-origin mode), copies to `/var/www/server-monitor-frontend`
+- Starts backend containers (PostgreSQL, Redis, backend API)
+- Waits for health check
+
+Key env vars for non-interactive mode:
+
+| Variable          | Required | Description                              |
+| ----------------- | -------- | ---------------------------------------- |
+| `DOMAIN`          | Yes      | Your domain (e.g. `monitor.example.com`) |
+| `ADMIN_PASSWORD`  | Yes      | Admin dashboard password                 |
+| `REPO_URL`        | No       | Git URL to clone (auto-detected in repo) |
+| `INSTALL_DIR`     | No       | Install path (default: `/opt/server-monitor`) |
+| `FRONTEND_DIR`    | No       | Frontend static path (default: `/var/www/server-monitor-frontend`) |
+
+After the script finishes, proceed to **nginx setup** below.
+
+## Manual setup
+
+### Step 1: Clone and configure
 
 ```bash
 git clone <your-repo> server-monitor
@@ -40,7 +73,7 @@ EOF
 
 > `AGENT_API_KEY` is optional. Per-server keys are managed from the dashboard (see Adding Agents below).
 
-## Step 2: Build frontend locally
+### Step 2: Build frontend locally
 
 ```bash
 # Empty VITE_API_URL = same-origin mode (API calls go to /api/ on the same domain)
@@ -49,7 +82,7 @@ VITE_API_URL= VITE_SOCKET_URL= pnpm build:frontend
 
 This produces `apps/frontend/dist/` with the static SPA.
 
-## Step 3: Copy dist to VPS
+### Step 3: Copy dist to VPS
 
 ```bash
 # Create the directory on VPS
@@ -59,7 +92,7 @@ ssh user@your-vps "mkdir -p /var/www/server-monitor-frontend"
 scp -r apps/frontend/dist/* user@your-vps:/var/www/server-monitor-frontend/
 ```
 
-## Step 4: Start backend + databases on VPS
+### Step 4: Start backend + databases on VPS
 
 ```bash
 pnpm docker:prod:up
@@ -73,7 +106,7 @@ pnpm docker:prod:rebuild
 
 This starts **backend** (:3300), **postgres**, **redis**. No frontend container — nginx handles that.
 
-## Step 5: Install and configure nginx
+## Nginx setup
 
 ```bash
 apt install nginx certbot python3-certbot-nginx
@@ -179,23 +212,34 @@ Each agent needs its own API key. There are two ways to authenticate agents:
 On the server to monitor (must have Node.js 18+):
 
 ```bash
-# Using the install script
+# Interactive — prompts for API key, server ID, and interval
+bash <(curl -fsSL https://monitor.your-domain.com/install.sh)
+
+# Fully non-interactive
 bash <(curl -fsSL https://monitor.your-domain.com/install.sh) \
+  --non-interactive \
   --server-id srv-my-vps-01 \
-  --api-url https://monitor.your-domain.com \
   --api-key <paste-the-key-from-dashboard>
 
-# Or manually:
+# Or partial — only override specific values, let it prompt for the rest
+API_KEY=<paste-the-key-from-dashboard> \
+  bash <(curl -fsSL https://monitor.your-domain.com/install.sh)
+```
+
+All options (`--server-id`, `--api-url`, `--api-key`, `--interval`, `--non-interactive`) can be set via CLI flags or env vars. The script has a built-in `__BACKEND_URL__` placeholder — when served from your backend, the URL is auto-detected so you won't be prompted for it.
+
+```bash
+# Manual install (no systemd):
 curl -O https://monitor.your-domain.com/agent.js
 chmod +x agent.js
 SERVER_ID=srv-my-vps-01 \
 API_URL=https://monitor.your-domain.com \
 API_KEY=<paste-the-key-from-dashboard> \
-INTERVAL_MS=5000 \
+INTERVAL_MS=60000 \
 node agent.js
 ```
 
-The agent auto-installs as a systemd service with the install script.
+The install script sets up a systemd service that starts on boot and restarts on crash.
 
 ### Master key (optional, for your own servers)
 
