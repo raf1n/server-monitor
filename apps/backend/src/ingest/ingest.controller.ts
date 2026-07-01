@@ -9,6 +9,7 @@ import {
   PayloadTooLargeException,
   BadRequestException,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { validateOrReject } from 'class-validator';
@@ -20,6 +21,7 @@ import { ApiKeysService } from '../api-keys/api-keys.service';
 import { IngestDataDto } from '../dtos/ingest.dto';
 
 @Public()
+@Throttle({ default: { limit: 300, ttl: 60_000 } })
 @Controller('ingest')
 export class IngestController {
   constructor(

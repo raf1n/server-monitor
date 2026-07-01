@@ -9,6 +9,8 @@ function parseArgs() {
     apiUrl: process.env.API_URL || "http://localhost:3300",
     apiKey: process.env.API_KEY || "",
     interval: Number(process.env.INTERVAL_MS) || 60000,
+    maxRetries: Number(process.env.MAX_RETRIES) || 3,
+    retryBackoff: Number(process.env.RETRY_BACKOFF) || 1000,
   };
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -30,6 +32,22 @@ function parseArgs() {
       }
       config.interval = val;
       i++;
+    } else if (arg === "--max-retries") {
+      const val = Number(next);
+      if (isNaN(val) || val < 0 || !isFinite(val)) {
+        console.error("Error: --max-retries must be a non-negative number");
+        process.exit(1);
+      }
+      config.maxRetries = val;
+      i++;
+    } else if (arg === "--retry-backoff") {
+      const val = Number(next);
+      if (isNaN(val) || val <= 0 || !isFinite(val)) {
+        console.error("Error: --retry-backoff must be a positive number");
+        process.exit(1);
+      }
+      config.retryBackoff = val;
+      i++;
     } else if (arg === "--help" || arg === "-h") {
       console.log(`
 Server Monitor Agent
@@ -38,14 +56,16 @@ Usage:
   node agent.js [options]
 
 Options:
-  --id, --server-id <id>       Unique server identifier (default: srv-prod-01)
-  --url, --api-url <url>       Backend API URL (default: http://localhost:3300)
-  --key, --api-key <key>       API key for authentication
-  --interval <ms>              Metrics collection interval (default: 60000)
-  -h, --help                   Show this help
+  --id, --server-id <id>         Unique server identifier (default: srv-prod-01)
+  --url, --api-url <url>         Backend API URL (default: http://localhost:3300)
+  --key, --api-key <key>         API key for authentication
+  --interval <ms>                Metrics collection interval (default: 60000)
+  --max-retries <n>              Send retry attempts before buffering (default: 3)
+  --retry-backoff <ms>           Base retry backoff in ms (default: 1000)
+  -h, --help                     Show this help
 
 Environment variables (fallback):
-  SERVER_ID, API_URL, API_KEY, INTERVAL_MS
+  SERVER_ID, API_URL, API_KEY, INTERVAL_MS, MAX_RETRIES, RETRY_BACKOFF
 `);
       process.exit(0);
     }
@@ -53,7 +73,8 @@ Environment variables (fallback):
   return config;
 }
 
-const { serverId, apiUrl, apiKey, interval } = parseArgs();
+const { serverId, apiUrl, apiKey, interval, maxRetries, retryBackoff } =
+  parseArgs();
 
 if (!apiKey) {
   console.error("Error: API key is required. Set API_KEY env var.");
@@ -70,10 +91,12 @@ if (!isLocalhost && !apiUrl.startsWith("https://")) {
 }
 
 const collector = new Collector(interval);
-const sender = new Sender(apiUrl, apiKey);
+const sender = new Sender(apiUrl, apiKey, maxRetries, retryBackoff);
 
 async function tick() {
   try {
+    await sender.flushBuffer();
+
     const stats = await collector.collect(serverId);
 
     await sender.send(stats);

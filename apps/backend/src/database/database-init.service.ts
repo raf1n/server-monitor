@@ -1,80 +1,34 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { UserEntity } from './entities/user.entity';
 
 @Injectable()
 export class DatabaseInitService implements OnModuleInit {
   private readonly logger = new Logger(DatabaseInitService.name);
 
+  private get userRepo() {
+    return this.dataSource.getRepository(UserEntity);
+  }
+
   constructor(private readonly dataSource: DataSource) {}
 
   async onModuleInit() {
     try {
-      await this.migrateUserRoleColumn();
-    } catch (err) {
-      this.logger.warn(
-        `User role migration skipped: ${(err as Error).message}`,
-      );
-    }
-    try {
-      await this.migrateApiKeysTable();
-    } catch (err) {
-      this.logger.warn(`Api keys migration skipped: ${(err as Error).message}`);
-    }
-    try {
       await this.setupHypertables();
     } catch (err) {
       this.logger.warn(`Hypertable setup skipped: ${(err as Error).message}`);
+    }
+    try {
+      await this.seedAdminUser();
+    } catch (err) {
+      this.logger.warn(`Admin user seeding skipped: ${(err as Error).message}`);
     }
   }
 
   private async ensureInitialized() {
     if (!this.dataSource.isInitialized) {
       await this.dataSource.initialize();
-    }
-  }
-
-  private async migrateUserRoleColumn() {
-    await this.ensureInitialized();
-
-    const columnExists = await this.dataSource.query(
-      'SELECT 1 FROM information_schema.columns WHERE table_name = \'users\' AND column_name = \'role\'',
-    );
-
-    if (columnExists.length === 0) {
-      this.logger.log('Adding role column to users table...');
-      await this.dataSource.query(
-        'ALTER TABLE "users" ADD COLUMN "role" varchar NOT NULL DEFAULT \'viewer\'',
-      );
-      this.logger.log('Role column added successfully');
-    }
-  }
-
-  private async migrateApiKeysTable() {
-    await this.ensureInitialized();
-
-    const tableExists = await this.dataSource.query(
-      'SELECT 1 FROM information_schema.tables WHERE table_name = \'api_keys\'',
-    );
-
-    if (tableExists.length === 0) {
-      this.logger.log('Creating api_keys table...');
-      await this.dataSource.query(`
-        CREATE TABLE "api_keys" (
-          "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-          "keyHash" varchar NOT NULL,
-          "keyPrefix" varchar(8) NOT NULL,
-          "serverId" varchar,
-          "label" varchar,
-          "revoked" boolean NOT NULL DEFAULT false,
-          "lastUsedAt" timestamptz,
-          "createdAt" timestamptz NOT NULL DEFAULT now(),
-          "updatedAt" timestamptz NOT NULL DEFAULT now()
-        )
-      `);
-      await this.dataSource.query(
-        'CREATE INDEX "IDX_api_keys_serverId" ON "api_keys" ("serverId")',
-      );
-      this.logger.log('api_keys table created');
     }
   }
 
@@ -99,7 +53,7 @@ export class DatabaseInitService implements OnModuleInit {
         );
 
         await this.dataSource.query(
-          'SELECT add_compression_policy($1, INTERVAL \'1 day\', if_not_exists => TRUE)',
+          "SELECT add_compression_policy($1, INTERVAL '1 day', if_not_exists => TRUE)",
           [table],
         );
 
@@ -114,8 +68,36 @@ export class DatabaseInitService implements OnModuleInit {
       );
     }
 
-    this.logger.log(
-      `TimescaleDB hypertables configured with ${retentionDays}-day retention`,
-    );
+    this.logger.log(`TimescaleDB hypertables configured with ${retentionDays}-day retention`);
+  }
+
+  private async seedAdminUser() {
+    const count = await this.userRepo.count();
+    if (count === 0) {
+      const username = process.env.ADMIN_USERNAME || 'admin';
+      const password = process.env.ADMIN_PASSWORD;
+      if (!password) {
+        this.logger.error('ADMIN_PASSWORD environment variable is required when no users exist.');
+        throw new Error('ADMIN_PASSWORD is required');
+      }
+      const hash = await bcrypt.hash(password, 10);
+      await this.userRepo.save({ username, password: hash, role: 'admin' });
+      this.logger.log(`Default admin user created: ${username}`);
+    } else {
+      const adminCount = await this.userRepo.count({
+        where: { role: 'admin' as any },
+      });
+      if (adminCount === 0) {
+        const firstUser = await this.userRepo.findOne({
+          where: {},
+          order: { createdAt: 'ASC' } as any,
+        });
+        if (firstUser) {
+          firstUser.role = 'admin' as any;
+          await this.userRepo.save(firstUser);
+          this.logger.log(`Promoted existing user to admin: ${firstUser.username}`);
+        }
+      }
+    }
   }
 }

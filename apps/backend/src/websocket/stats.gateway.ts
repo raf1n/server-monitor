@@ -5,10 +5,11 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { Inject, OnModuleInit, Logger } from '@nestjs/common';
+import { Inject, OnModuleInit, Logger, UseGuards } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import * as jwt from 'jsonwebtoken';
 import { REDIS_SUBSCRIBER } from '../redis/redis.module';
+import { WsThrottle, WsThrottlerGuard } from './ws-throttler.guard';
 import type Redis from 'ioredis';
 
 interface JwtPayload {
@@ -118,6 +119,8 @@ export class StatsGateway
   }
 
   @SubscribeMessage('subscribe')
+  @UseGuards(WsThrottlerGuard)
+  @WsThrottle({ limit: 30, windowMs: 60_000 })
   handleSubscribe(client: Socket, payload: { serverId: string }) {
     const { serverId } = payload;
     if (!serverId) return;

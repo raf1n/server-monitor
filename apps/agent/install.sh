@@ -6,13 +6,14 @@ set -euo pipefail
 # Usage: bash install.sh [options]
 # ──────────────────────────────────────────────
 
-SCRIPT_VERSION="1.0.0"
+SCRIPT_VERSION="1.1.0"
 AGENT_URL="${AGENT_URL:-}"
 SERVER_ID="${SERVER_ID:-}"
 API_URL="${API_URL:-}"
 API_KEY="${API_KEY:-}"
 INTERVAL_MS="${INTERVAL_MS:-60000}"
 UNINSTALL="${UNINSTALL:-false}"
+NON_INTERACTIVE="${NON_INTERACTIVE:-false}"
 
 AGENT_DIR="/opt/server-monitor-agent"
 AGENT_BIN="${AGENT_DIR}/agent.js"
@@ -40,10 +41,14 @@ Options:
   --server-id ID      Unique server identifier (e.g. srv-prod-01)
   --api-url URL       Backend API base URL (e.g. https://monitor.example.com)
   --api-key KEY       Agent API key (must match backend AGENT_API_KEY)
-  --interval MS       Metrics collection interval in ms (default: 5000)
+  --interval MS       Metrics collection interval in ms (default: 60000)
+  --non-interactive   Never prompt; fail instead if a required value is missing
   --uninstall         Remove agent and service
 
 All options can also be set via environment variables (AGENT_URL, SERVER_ID, etc.).
+
+Any value not supplied via flag or env var will be prompted for interactively
+(read from /dev/tty, so this works even when piped through curl | sudo bash).
 EOF
   exit 0
 }
@@ -52,16 +57,58 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --agent-url)   AGENT_URL="$2";   shift 2 ;;
-    --server-id)   SERVER_ID="$2";   shift 2 ;;
-    --api-url)     API_URL="$2";     shift 2 ;;
-    --api-key)     API_KEY="$2";     shift 2 ;;
-    --interval)    INTERVAL_MS="$2"; shift 2 ;;
-    --uninstall)   UNINSTALL=true;   shift ;;
-    --help|-h)     usage ;;
-    *)             fatal "Unknown option: $1 (use --help)" ;;
+    --agent-url)       AGENT_URL="$2";     shift 2 ;;
+    --server-id)       SERVER_ID="$2";     shift 2 ;;
+    --api-url)         API_URL="$2";       shift 2 ;;
+    --api-key)         API_KEY="$2";       shift 2 ;;
+    --interval)        INTERVAL_MS="$2";   shift 2 ;;
+    --non-interactive) NON_INTERACTIVE=true; shift ;;
+    --uninstall)       UNINSTALL=true;     shift ;;
+    --help|-h)         usage ;;
+    *)                 fatal "Unknown option: $1 (use --help)" ;;
   esac
 done
+
+# ── interactive prompt helper ─────────────────
+# Reads from /dev/tty so it still works when the script itself is being fed
+# via stdin, e.g. `curl -sSL https://.../install.sh | sudo -E bash`.
+# In that case stdin is the piped script text, not a keyboard — /dev/tty is
+# the only place real user input can come from.
+
+TTY_AVAILABLE=false
+if [[ -r /dev/tty && -w /dev/tty ]]; then
+  TTY_AVAILABLE=true
+fi
+
+# prompt VAR "Prompt text" ["default"] [secret:true|false]
+prompt() {
+  local __var="$1" __msg="$2" __default="${3:-}" __secret="${4:-false}"
+  local __current="${!__var}"
+
+  # Already set via flag/env — nothing to do.
+  [[ -n "${__current}" ]] && return 0
+
+  if [[ "${NON_INTERACTIVE}" == "true" || "${TTY_AVAILABLE}" != "true" ]]; then
+    if [[ -n "${__default}" ]]; then
+      printf -v "${__var}" '%s' "${__default}"
+      return 0
+    fi
+    return 0   # leave empty; caller decides if that's fatal
+  fi
+
+  local __input=""
+  if [[ "${__secret}" == "true" ]]; then
+    read -r -s -p "${__msg}: " __input < /dev/tty
+    echo "" > /dev/tty
+  elif [[ -n "${__default}" ]]; then
+    read -r -p "${__msg} [${__default}]: " __input < /dev/tty
+  else
+    read -r -p "${__msg}: " __input < /dev/tty
+  fi
+
+  [[ -z "${__input}" && -n "${__default}" ]] && __input="${__default}"
+  printf -v "${__var}" '%s' "${__input}"
+}
 
 # ── detect OS ─────────────────────────────────
 
@@ -163,23 +210,28 @@ else
   SKIP_SERVICE=false
 fi
 
-# ── validate required params ──────────────────
+# ── gather required params (interactive if missing) ──
+
+prompt API_URL "Backend API URL (e.g. https://monitor.example.com)"
+[[ -z "${API_URL}" && "${NON_INTERACTIVE}" != "true" ]] && fatal "API_URL is required"
+[[ -z "${API_URL}" ]] && API_URL="__BACKEND_URL__"
 
 if [[ -z "${AGENT_URL}" ]]; then
-  if [[ -z "${API_URL}" ]]; then
-    API_URL="__BACKEND_URL__"
-  fi
   AGENT_URL="${API_URL}/agent.js"
 fi
 
-[[ -z "${SERVER_ID}" ]] && SERVER_ID="srv-$(hostname | tr '[:upper:]' '[:lower:]')"
+prompt SERVER_ID "Server ID" "srv-$(hostname | tr '[:upper:]' '[:lower:]')"
 
 # When piped through sudo, env vars set before the pipe only reach curl, not bash.
-# Try to read them from the original user's environment (sudo -E preserves then).
+# Try to read them from the original user's environment (sudo -E preserves them).
 if [[ -z "${API_KEY}" && -n "${SUDO_USER:-}" ]]; then
   API_KEY="$(sudo -u "$SUDO_USER" bash -c 'echo "${API_KEY:-}"' 2>/dev/null || true)"
 fi
+
+prompt API_KEY "Agent API key (input hidden)" "" true
 [[ -z "${API_KEY}" ]] && warn "No API_KEY set — agent will fail unless backend AGENT_API_KEY is empty"
+
+prompt INTERVAL_MS "Metrics collection interval in ms" "${INTERVAL_MS}"
 
 # ── download agent ────────────────────────────
 

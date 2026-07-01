@@ -26,6 +26,7 @@ async function bootstrap() {
 
   app.use(helmet());
   app.use(cookieParser());
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
 
   app.setGlobalPrefix('api', {
     exclude: [
