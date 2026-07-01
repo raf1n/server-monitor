@@ -212,14 +212,11 @@ fi
 
 # ── gather required params (interactive if missing) ──
 
-# When served from the backend's /install.sh endpoint, __BACKEND_URL__ is
-# replaced with the server's actual URL. If the placeholder is still present
-# the script is being run from a repo checkout and we need to prompt.
-if [[ "${API_URL}" == "__BACKEND_URL__" || -z "${API_URL}" ]]; then
-  API_URL=""
-  prompt API_URL "Backend API URL (e.g. https://monitor.example.com)"
-fi
-[[ -z "${API_URL}" && "${NON_INTERACTIVE}" != "true" ]] && fatal "API_URL is required"
+# When served from the backend's /install.sh endpoint, the literal
+# __BACKEND_URL__ below is replaced with the server's actual URL.
+# If not set via env var and not replaced by the backend, the fallback
+# will fail at download time — the user must supply API_URL.
+[[ -z "${API_URL}" ]] && API_URL="__BACKEND_URL__"
 
 if [[ -z "${AGENT_URL}" ]]; then
   AGENT_URL="${API_URL}/agent.js"
