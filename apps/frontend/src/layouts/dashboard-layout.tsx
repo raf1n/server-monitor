@@ -32,7 +32,7 @@ export default function DashboardLayout() {
 
   useEffect(() => {
     if (initRef.current) return;
-    if (API_HOST && servers.length === 0) return;
+    if (API_HOST !== undefined && servers.length === 0) return;
     initRef.current = true;
 
     const urlServer = searchParams.get("server") || servers[0]?.id || selectedId || "";

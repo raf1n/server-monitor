@@ -102,7 +102,7 @@ export function ServersPage() {
   const cachedServers = useAppSelector(selectServers);
 
   const { data: apiServers = [] } = useGetServersQuery(undefined, {
-    skip: !import.meta.env.VITE_API_URL,
+    skip: import.meta.env.VITE_API_URL === undefined,
   });
 
   const servers = cachedServers.length > 0 ? cachedServers : apiServers;

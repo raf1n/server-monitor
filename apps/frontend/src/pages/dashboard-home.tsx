@@ -35,11 +35,11 @@ export function DashboardHome() {
   const apiAlerts = useAppSelector(selectAlerts);
 
   const { data: apiServers = [] } = useGetServersQuery(undefined, {
-    skip: !import.meta.env.VITE_API_URL,
+    skip: import.meta.env.VITE_API_URL === undefined,
   });
   const allServers = servers.length > 0 ? servers : apiServers;
 
-  const isLive = !!import.meta.env.VITE_API_URL;
+  const isLive = import.meta.env.VITE_API_URL !== undefined;
   useGetStatsHistoryQuery(
     { serverId: serverId!, range: timeRange },
     { skip: !isLive || !serverId },

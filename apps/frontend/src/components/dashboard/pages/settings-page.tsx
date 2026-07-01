@@ -67,7 +67,7 @@ export function SettingsPage() {
   const seeded = useRef<string | undefined>(undefined);
 
   const { data: backendSettings } = useGetSettingsQuery(scopeServerId, {
-    skip: !import.meta.env.VITE_API_URL,
+    skip: import.meta.env.VITE_API_URL === undefined,
   });
 
   useEffect(() => {
@@ -91,7 +91,7 @@ export function SettingsPage() {
   };
 
   const handleSave = async () => {
-    if (!import.meta.env.VITE_API_URL) return;
+    if (import.meta.env.VITE_API_URL === undefined) return;
     try {
       const entries: Record<string, string> = {};
       for (const [k, v] of Object.entries(settings)) {

@@ -12,9 +12,11 @@ export interface ServersState {
   timeRange: TimeRange;
 }
 
+const isLive = API_HOST !== undefined;
+
 const initialState: ServersState = {
-  servers: API_HOST ? [] : DEMO_SERVERS,
-  selectedId: API_HOST ? "" : (DEMO_SERVERS[0]?.id ?? ""),
+  servers: isLive ? [] : DEMO_SERVERS,
+  selectedId: isLive ? "" : (DEMO_SERVERS[0]?.id ?? ""),
   timeRange: "5m",
 };
 

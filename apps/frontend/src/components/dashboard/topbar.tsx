@@ -92,7 +92,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
   const [acknowledgeAll] = useAcknowledgeAllAlertsMutation();
 
   const { data: servers = [] } = useGetServersQuery(undefined, {
-    skip: !import.meta.env.VITE_API_URL,
+    skip: import.meta.env.VITE_API_URL === undefined,
   });
 
   const selectedServer = servers.find((s) => s.id === serverId) ?? servers[0];
@@ -104,7 +104,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
 
   const handleLogout = async () => {
     try {
-      if (import.meta.env.VITE_API_URL) await logout(undefined).unwrap();
+      if (import.meta.env.VITE_API_URL !== undefined) await logout(undefined).unwrap();
     } catch {
       // ignore logout errors
     }
